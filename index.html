@@ -1,93 +1,54 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSDS Materials - <span id="page-title"></span></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2 { color: #2c3e50; }
+        .folder { cursor: pointer; background: #3498db; color: white; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .folder:hover { background: #2980b9; }
+        .subfolder, .file { padding-left: 20px; margin: 5px 0; }
+        .subfolder { background: #ecf0f1; border-left: 3px solid #95a5a6; }
+        .file a { color: #e74c3c; text-decoration: none; }
+        .file a:hover { text-decoration: underline; }
+        .hidden { display: none; }
+        nav { background: #34495e; padding: 10px; }
+        nav a { color: white; margin-right: 15px; text-decoration: none; }
+    </style>
+    <script>
+        function toggleFolder(id) {
+            const content = document.getElementById(id);
+            content.classList.toggle('hidden');
+        }
+        // Set page title dynamically
+        document.addEventListener('DOMContentLoaded', function() {
+            const title = document.getElementById('page-title');
+            title.textContent = window.location.pathname.includes('bsds1') ? 'BSDS 1' : window.location.pathname.includes('bsds2') ? 'BSDS 2' : 'Home';
+        });
+    </script>
+</head>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>BSDS Materials</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f7f9fc;
-      color: #333;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background-color: #0052cc;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 2rem;
-    }
-
-    main {
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-
-    .folder-list {
-      list-style-type: none;
-      padding: 0;
-    }
-
-    .folder-list li {
-      background: white;
-      margin: 0.5rem 0;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .folder-list li:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-    }
-
-    a {
-      text-decoration: none;
-      color: #0052cc;
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
-
-    footer {
-      text-align: center;
-      padding: 1rem;
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #777;
-    }
-
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-    }
-  </style>
+    <!-- Paste the shared <head> content here -->
 </head>
 <body>
-  <header>
-    <h1>📚 BSDS Materials</h1>
-    <p>Your organized study repository</p>
-  </header>
-
-  <main>
-    <ul class="folder-list">
-      <li><a href="BSDS_1/">📁 BSDS_1</a></li>
-      <li><a href="BSDS_2/">📁 BSDS_2</a></li>
-      <li><a href="README.md" target="_blank">📄 README</a></li>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="bsds1.html">BSDS 1</a>
+        <a href="bsds2.html">BSDS 2</a>
+    </nav>
+    <h1>BSDS Materials Repository</h1>
+    <p>Welcome to the interactive site for <a href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank">BSDS_Materials</a>. Browse notes and documents organized by folder.</p>
+    
+    <h2>Folders</h2>
+    <ul>
+        <li><a href="bsds1.html">BSDS 1</a> - Core materials and subtopics.</li>
+        <li><a href="bsds2.html">BSDS 2</a> - Advanced materials and extensions.</li>
     </ul>
-  </main>
-
-  <footer>
-    © 2025 BSDS Repository · Powered by GitHub Pages
-  </footer>
+    
+    <footer style="margin-top: 50px; text-align: center; color: #7f8c8d;">
+        <p>&copy; 2025 Cyclotron123 | Powered by GitHub Pages</p>
+    </footer>
 </body>
 </html>
