@@ -1,72 +1,108 @@
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSDS Materials - <span id="page-title"></span></title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        h1, h2 { color: #2c3e50; }
-        .folder { cursor: pointer; background: #3498db; color: white; padding: 10px; margin: 5px 0; border-radius: 5px; }
-        .folder:hover { background: #2980b9; }
-        .subfolder, .file { padding-left: 20px; margin: 5px 0; }
-        .subfolder { background: #ecf0f1; border-left: 3px solid #95a5a6; }
-        .file a { color: #e74c3c; text-decoration: none; }
-        .file a:hover { text-decoration: underline; }
-        .hidden { display: none; }
-        nav { background: #34495e; padding: 10px; }
-        nav a { color: white; margin-right: 15px; text-decoration: none; }
-    </style>
-    <script>
-        function toggleFolder(id) {
-            const content = document.getElementById(id);
-            content.classList.toggle('hidden');
-        }
-        // Set page title dynamically
-        document.addEventListener('DOMContentLoaded', function() {
-            const title = document.getElementById('page-title');
-            title.textContent = window.location.pathname.includes('bsds1') ? 'BSDS 1' : window.location.pathname.includes('bsds2') ? 'BSDS 2' : 'Home';
-        });
-    </script>
-</head>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Paste the shared <head> content here -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSDS 1 Materials</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="bsds1.html">BSDS 1</a>
-        <a href="bsds2.html">BSDS 2</a>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">BSDS Materials</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="bsds1.html" class="nav-link active">BSDS 1</a></li>
+                <li><a href="bsds2.html" class="nav-link">BSDS 2</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
     </nav>
-    <h1>BSDS 1 Materials</h1>
-    <p>Interactive browser for BSDS_1 folder contents. Click folders to expand.</p>
-    
-    <div id="contents">
-        <!-- Example Subfolder 1: Replace with actual subfolders/files -->
-        <div class="folder" onclick="toggleFolder('sub1')">📁 Introduction</div>
-        <div id="sub1" class="hidden">
-            <div class="subfolder">📁 Basics</div>
-            <div class="file"><a href="BSDS_1/Introduction/Basics/notes.pdf" target="_blank">notes.pdf</a> (Overview)</div>
-            <div class="file"><a href="BSDS_1/Introduction/Basics/diagram.jpg" download>diagram.jpg</a></div>
-            <div class="subfolder">📁 Examples</div>
-            <div class="file"><a href="BSDS_1/Introduction/Examples/example1.md" target="_blank">example1.md</a></div>
+
+    <div class="page-header">
+        <div class="container">
+            <h1>BSDS 1 Materials</h1>
+            <p>Browse and access all BSDS 1 course resources</p>
         </div>
-        
-        <!-- Example Subfolder 2 -->
-        <div class="folder" onclick="toggleFolder('sub2')">📁 Chapter 1: Data Structures</div>
-        <div id="sub2" class="hidden">
-            <div class="file"><a href="BSDS_1/Chapter1/arrays.pdf" target="_blank">arrays.pdf</a></div>
-            <div class="file"><a href="BSDS_1/Chapter1/linked_lists.txt" download>linked_lists.txt</a></div>
-            <div class="subfolder">📁 Exercises</div>
-            <div class="file"><a href="BSDS_1/Chapter1/Exercises/q1.py" download>q1.py</a></div>
-        </div>
-        
-        <!-- Add more subfolders here, e.g., for Chapter 2, etc. -->
-        <!-- To automate: Use a script to generate this HTML from dir listing -->
     </div>
-    
-    <footer style="margin-top: 50px; text-align: center; color: #7f8c8d;">
-        <p>&copy; 2025 Cyclotron123 | <a href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank">View on GitHub</a></p>
+
+    <section class="content">
+        <div class="container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search for files or folders..." onkeyup="filterContent()">
+            </div>
+
+            <div class="folder-structure">
+                <!-- Replace these with your actual folder structure -->
+                <div class="folder-item" data-name="lecture notes">
+                    <div class="folder-header" onclick="toggleFolder(this)">
+                        <span class="folder-icon">📁</span>
+                        <h3>Lecture Notes</h3>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="folder-content">
+                        <a href="BSDS 1/Lecture Notes/week1.html" class="file-link">
+                            <span class="file-icon">📄</span> Week 1 - Introduction
+                        </a>
+                        <a href="BSDS 1/Lecture Notes/week2.html" class="file-link">
+                            <span class="file-icon">📄</span> Week 2 - Fundamentals
+                        </a>
+                    </div>
+                </div>
+
+                <div class="folder-item" data-name="assignments">
+                    <div class="folder-header" onclick="toggleFolder(this)">
+                        <span class="folder-icon">📁</span>
+                        <h3>Assignments</h3>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="folder-content">
+                        <a href="BSDS 1/Assignments/assignment1.html" class="file-link">
+                            <span class="file-icon">📝</span> Assignment 1
+                        </a>
+                        <a href="BSDS 1/Assignments/assignment2.html" class="file-link">
+                            <span class="file-icon">📝</span> Assignment 2
+                        </a>
+                    </div>
+                </div>
+
+                <div class="folder-item" data-name="reference materials">
+                    <div class="folder-header" onclick="toggleFolder(this)">
+                        <span class="folder-icon">📁</span>
+                        <h3>Reference Materials</h3>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="folder-content">
+                        <a href="BSDS 1/Reference/textbook.html" class="file-link">
+                            <span class="file-icon">📖</span> Textbook Chapters
+                        </a>
+                        <a href="BSDS 1/Reference/papers.html" class="file-link">
+                            <span class="file-icon">📑</span> Research Papers
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>📌 How to Navigate</h4>
+                <p>Click on any folder name to expand and view its contents. Click on file links to access the materials.</p>
+                <p>Use the search box above to quickly find specific content.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 BSDS Materials. All rights reserved.</p>
+            <p><a href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank">View on GitHub</a></p>
+        </div>
     </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
