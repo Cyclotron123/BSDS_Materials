@@ -1,0 +1,68 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSDS Materials - <span id="page-title"></span></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2 { color: #2c3e50; }
+        .folder { cursor: pointer; background: #3498db; color: white; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .folder:hover { background: #2980b9; }
+        .subfolder, .file { padding-left: 20px; margin: 5px 0; }
+        .subfolder { background: #ecf0f1; border-left: 3px solid #95a5a6; }
+        .file a { color: #e74c3c; text-decoration: none; }
+        .file a:hover { text-decoration: underline; }
+        .hidden { display: none; }
+        nav { background: #34495e; padding: 10px; }
+        nav a { color: white; margin-right: 15px; text-decoration: none; }
+    </style>
+    <script>
+        function toggleFolder(id) {
+            const content = document.getElementById(id);
+            content.classList.toggle('hidden');
+        }
+        // Set page title dynamically
+        document.addEventListener('DOMContentLoaded', function() {
+            const title = document.getElementById('page-title');
+            title.textContent = window.location.pathname.includes('bsds1') ? 'BSDS 1' : window.location.pathname.includes('bsds2') ? 'BSDS 2' : 'Home';
+        });
+    </script>
+</head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Paste the shared <head> content here -->
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="bsds1.html">BSDS 1</a>
+        <a href="bsds2.html">BSDS 2</a>
+    </nav>
+    <h1>BSDS 2 Materials</h1>
+    <p>Interactive browser for BSDS_2 folder contents. Click folders to expand.</p>
+    
+    <div id="contents">
+        <!-- Example Subfolder 1: Replace with actual -->
+        <div class="folder" onclick="toggleFolder('suba')">📁 Advanced Topics</div>
+        <div id="suba" class="hidden">
+            <div class="subfolder">📁 Graphs</div>
+            <div class="file"><a href="BSDS_2/Advanced/Graphs/graph_theory.pdf" target="_blank">graph_theory.pdf</a></div>
+            <div class="file"><a href="BSDS_2/Advanced/Graphs/algo.png" download>algo.png</a></div>
+        </div>
+        
+        <!-- Example Subfolder 2 -->
+        <div class="folder" onclick="toggleFolder('subb')">📁 Case Studies</div>
+        <div id="subb" class="hidden">
+            <div class="file"><a href="BSDS_2/CaseStudies/realworld.docx" target="_blank">realworld.docx</a></div>
+            <div class="subfolder">📁 Implementations</div>
+            <div class="file"><a href="BSDS_2/CaseStudies/Implementations/code.zip" download>code.zip</a></div>
+        </div>
+        
+        <!-- Add more as needed -->
+    </div>
+    
+    <footer style="margin-top: 50px; text-align: center; color: #7f8c8d;">
+        <p>&copy; 2025 Cyclotron123 | <a href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank">View on GitHub</a></p>
+    </footer>
+</body>
+</html>
