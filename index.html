@@ -1,458 +1,572 @@
-<!DOCTYPE html>
+<!--
+Single-file GitHub Pages File Manager
+Drop this file at the root of your repo (e.g. /index.html) and enable GitHub Pages.
+
+Change owner/repo/branch below in the CONFIG section if needed.
+
+Features:
+- Uses GitHub REST API to fetch the repo tree (recursive)
+- Shows only top-level folders on the main page
+- Clicking a folder toggles into a folder "subpage" (SPA, no reload)
+- Breadcrumbs, back button, accessible toggles
+- PDF files open in-browser via embedded iframe (raw.githubusercontent.com)
+- Text/Markdown/code preview in a modal
+- Keyboard-accessible controls and ARIA attributes
+- Dark-blue theme, white text, responsive
+
+Limitations & Notes:
+- This implementation uses the public GitHub REST API (rate-limited for unauthenticated requests).
+  If you hit rate limits, you'll see a message with a fallback suggestion.
+- For very large trees, rendering is lazy: nested items render only when expanded.
+- Single-file only — no external CSS/JS or libraries used.
+
+How to deploy to GitHub Pages (short):
+1. Put this file as `index.html` in the repo root on branch `main`.
+2. In the repo settings > Pages, enable GitHub Pages to serve from the `main` branch root.
+3. Visit `https://<username>.github.io/<repo>/` (may take a minute to publish).
+
+-->
+
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Repo Browser</title>
-    <style>
-        /* --- Configuration & Deployment Comments ---
-         *
-         * How to change the repository:
-         *   - In the <script> section below, find the constants REPO_OWNER, REPO_NAME, and REPO_BRANCH.
-         *   - Change their values to match the target repository you want to display.
-         *
-         * How to deploy to GitHub Pages:
-         *   1. Push this `index.html` file to a GitHub repository.
-         *   2. In your repository's settings, go to the "Pages" section.
-         *   3. Under "Build and deployment", select "Deploy from a branch" as the source.
-         *   4. Choose the branch where you pushed this file (e.g., `main` or `gh-pages`).
-         *   5. Select the `/(root)` folder and click "Save".
-         *   6. Your site will be live at `https://<your-username>.github.io/<repository-name>/` in a few minutes.
-         *
-         * --- End of Comments ---
-        */
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Repo Browser — BSDS_Materials</title>
+  <style>
+    /* CONFIGURED THEME: dark blue background, white primary text */
+    :root{
+      --bg:#071A34; /* deep navy */
+      --panel:#0b2545; /* panel */
+      --card:#09233f;
+      --muted:#cbd5e1; /* off-white */
+      --accent:#1f6feb; /* subtle accent */
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --gap:12px;
+      --shadow: 0 6px 18px rgba(2,6,23,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html,body{height:100%;}
+    body{
+      margin:0;
+      min-height:100%;
+      background:linear-gradient(180deg,var(--bg), #051427 120%);
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      font-size:15px;
+      line-height:1.4;
+      padding:20px;
+    }
 
-        :root {
-            --bg-color: #1A202C; /* Deep Navy Blue */
-            --text-color: #E2E8F0; /* Light Grayish White */
-            --primary-color: #A0B9D6; /* Soft Blue */
-            --accent-color: #4DB6AC; /* Teal */
-            --border-color: #2D3748;
-            --card-bg: #2D3748;
-            --link-hover: #4fd1c5;
-        }
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:var(--gap);
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    header{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      margin-bottom:6px;
+    }
+    .logo{
+      width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,var(--panel),#063053);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);
+      flex:0 0 56px;
+    }
+    .logo strong{font-size:18px;color:var(--muted);}
+    h1{margin:0;font-size:18px;letter-spacing:0.2px}
+    .subtitle{color:var(--muted);font-size:13px}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
+    .controls{display:flex;gap:8px;align-items:center;margin-left:auto}
+    .search{background:var(--card);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);min-width:220px}
+    .hint{font-size:13px;color:var(--muted);margin-top:6px}
 
-        main {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 1rem;
-        }
+    main{display:block;}
 
-        header h1 {
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            text-align: center;
-        }
-        header p {
-            text-align: center;
-            color: var(--text-color);
-            margin-bottom: 2rem;
-        }
-        header p a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
-        header p a:hover {
-            text-decoration: underline;
-        }
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:18px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:16px;box-shadow:var(--shadow);cursor:pointer;border:1px solid rgba(255,255,255,0.03);
+      transition:transform .16s ease, box-shadow .16s ease;
+    }
+    .card:focus{outline:3px solid rgba(31,111,235,0.14)}
+    .card:hover{transform:translateY(-6px)}
+    .card .name{font-weight:600}
+    .card .meta{color:var(--muted);font-size:13px;margin-top:6px}
 
-        #breadcrumbs {
-            margin-bottom: 1rem;
-            padding: 0.75rem 1rem;
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
+    .folder-list{list-style:none;padding:0;margin:0}
+    .folder-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px}
 
-        #breadcrumbs a {
-            color: var(--accent-color);
-            text-decoration: none;
-            cursor: pointer;
-        }
+    .breadcrumbs{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+    .breadcrumb{cursor:pointer}
+    .breadcrumb:focus{outline:2px solid rgba(255,255,255,0.06)}
 
-        #breadcrumbs a:hover {
-            text-decoration: underline;
-        }
+    .file-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px}
+    .file-row .left{display:flex;gap:12px;align-items:center}
+    .file-row:hover{background:rgba(255,255,255,0.02)}
+    .file-name{font-weight:500}
+    .file-meta{color:var(--muted);font-size:13px}
 
-        #file-list {
-            list-style: none;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+    .back-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;cursor:pointer}
 
-        #file-list li {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.2s;
-        }
-        
-        #file-list li:last-child {
-            border-bottom: none;
-        }
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.8));display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
+    .modal{background:var(--panel);border-radius:12px;width:calc(100% - 40px);max-width:1100px;max-height:88vh;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+    .modal-header{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;gap:8px}
+    .modal-body{padding:8px;background:var(--glass);overflow:auto;flex:1}
+    .modal-iframe{width:100%;height:80vh;border:0}
+    .close-btn{margin-left:auto}
 
-        #file-list li a, #file-list li span {
-            color: var(--text-color);
-            text-decoration: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
+    /* small screens */
+    @media (max-width:600px){
+      .search{min-width:120px}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+    }
 
-        #file-list li:hover {
-            background-color: #3f4a5f;
-        }
-        
-        #file-list li a:focus, #file-list li span:focus {
-            outline: 2px solid var(--accent-color);
-            outline-offset: -2px;
-            border-radius: 4px;
-        }
-        
-        .icon {
-            margin-right: 1rem;
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-        }
+    /* accessible focus-visible tweak */
+    :focus{outline:none}
+    :focus-visible{outline:3px solid rgba(255,255,255,0.08);outline-offset:2px}
 
-        .loader {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        #preview-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        #preview-content {
-            background-color: var(--card-bg);
-            padding: 1rem;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 800px;
-            height: 80%;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        #preview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
-        }
-
-        #preview-filename {
-            font-weight: bold;
-            color: var(--primary-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        #close-preview {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        #preview-text {
-            flex-grow: 1;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
-            background-color: var(--bg-color);
-            padding: 1rem;
-            border-radius: 6px;
-        }
-
-        @media (max-width: 600px) {
-            main {
-                margin: 1rem auto;
-            }
-        }
-    </style>
+    .message{padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+  </style>
 </head>
 <body>
+  <div class="app" id="app">
+    <header>
+      <div class="logo" aria-hidden="true"><strong>BSDS</strong></div>
+      <div>
+        <h1 id="title">BSDS_Materials — Repository Browser</h1>
+        <div class="subtitle">Click a primary folder to open — PDFs open in-browser.</div>
+      </div>
+
+      <div class="controls">
+        <input id="search" class="search" placeholder="Search current folder (press / to focus)" aria-label="Search files" />
+      </div>
+    </header>
 
     <main>
-        <header>
-            <h1 id="repo-title">GitHub File Browser</h1>
-            <p>Browsing <a id="repo-link" href="#" target="_blank" rel="noopener noreferrer"></a></p>
-        </header>
+      <div id="status" class="hint message">Loading repository structure…</div>
+      <nav id="nav" style="margin-top:10px"></nav>
 
-        <nav id="breadcrumbs"></nav>
-        <ul id="file-list">
-            <li class="loader">Loading repository contents...</li>
-        </ul>
-    </main>
-    
-    <div id="preview-container">
-        <div id="preview-content">
-            <div id="preview-header">
-                <span id="preview-filename"></span>
-                <button id="close-preview" title="Close preview">&times;</button>
-            </div>
-            <pre id="preview-text"></pre>
+      <section id="content">
+        <!-- Folder cards view or folder contents rendered here -->
+        <div id="mainView">
+          <div class="hint" style="margin-top:8px">Top-level folders</div>
+          <div id="folders" class="grid" role="list" aria-label="Top-level folders"></div>
         </div>
+
+        <div id="folderView" style="display:none">
+          <div style="display:flex;gap:12px;align-items:center;margin-top:6px">
+            <button id="backToMain" class="back-btn" aria-label="Back to main" title="Back to main">← Main</button>
+            <div class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumbs"></div>
+          </div>
+
+          <div id="folderContents" style="margin-top:12px"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal for preview / PDF -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <div id="modalTitle">Preview</div>
+        <button id="modalClose" class="back-btn close-btn" aria-label="Close preview">Close</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
     </div>
+  </div>
 
+  <script>
+  /*
+    CONFIG: change these if you want to point to another repo/branch
+  */
+  const CONFIG = {
+    owner: 'Cyclotron123',
+    repo: 'BSDS_Materials',
+    branch: 'main'
+  };
 
-    <script>
-        // --- CONFIGURATION ---
-        const REPO_OWNER = 'Cyclotron123';
-        const REPO_NAME = 'BSDS_Materials';
-        const REPO_BRANCH = 'main';
-        // --- END CONFIGURATION ---
+  // End CONFIG
 
-        const GITHUB_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${REPO_BRANCH}?recursive=1`;
-        const GITHUB_REPO_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
-        
-        const TEXT_FILE_EXTENSIONS = ['md', 'txt', 'json', 'yml', 'yaml', 'js', 'ts', 'tsx', 'jsx', 'html', 'css', 'py', 'go', 'rs', 'c', 'cpp', 'log'];
+  // Helper: build API URLs
+  const API_TREE = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/git/trees/${CONFIG.branch}?recursive=1`;
+  const RAW_BASE = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/`;
 
-        let allFiles = [];
+  // State
+  let rawTree = null; // array of paths/objects from API
+  let treeMap = {}; // nested map: { 'folder/': {folders: {...}, files: [...] } }
+  let currentPath = ''; // '' indicates main page
 
-        const breadcrumbsEl = document.getElementById('breadcrumbs');
-        const fileListEl = document.getElementById('file-list');
-        const repoTitleEl = document.getElementById('repo-title');
-        const repoLinkEl = document.getElementById('repo-link');
-        
-        const previewContainer = document.getElementById('preview-container');
-        const previewFilenameEl = document.getElementById('preview-filename');
-        const previewTextEl = document.getElementById('preview-text');
-        const closePreviewButton = document.getElementById('close-preview');
+  // DOM
+  const statusEl = document.getElementById('status');
+  const foldersEl = document.getElementById('folders');
+  const folderView = document.getElementById('folderView');
+  const mainView = document.getElementById('mainView');
+  const folderContents = document.getElementById('folderContents');
+  const breadcrumbsEl = document.getElementById('breadcrumbs');
+  const backToMainBtn = document.getElementById('backToMain');
+  const navEl = document.getElementById('nav');
+  const searchInput = document.getElementById('search');
 
-        document.addEventListener('DOMContentLoaded', () => {
-            repoTitleEl.textContent = `${REPO_OWNER}/${REPO_NAME}`;
-            repoLinkEl.textContent = `${REPO_OWNER}/${REPO_NAME}`;
-            repoLinkEl.href = GITHUB_REPO_URL;
-            
-            fetchAndRender();
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const modalBody = document.getElementById('modalBody');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalClose = document.getElementById('modalClose');
 
-            closePreviewButton.addEventListener('click', closePreview);
-            previewContainer.addEventListener('click', (e) => {
-                if (e.target === previewContainer) {
-                    closePreview();
-                }
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === "Escape" && previewContainer.style.display === 'flex') {
-                    closePreview();
-                }
-            });
+  // Accessibility: focus trap helpers
+  let lastFocusedBeforeModal = null;
+
+  function openModal(title, contentNode, isPdf=false){
+    modalTitle.textContent = title || 'Preview';
+    modalBody.innerHTML = '';
+    if(isPdf){
+      const iframe = document.createElement('iframe');
+      iframe.className = 'modal-iframe';
+      iframe.src = contentNode; // contentNode is raw URL for PDF
+      iframe.title = title || 'PDF preview';
+      modalBody.appendChild(iframe);
+    } else {
+      modalBody.appendChild(contentNode);
+    }
+    modalBackdrop.style.display = 'flex';
+    modalBackdrop.setAttribute('aria-hidden','false');
+    lastFocusedBeforeModal = document.activeElement;
+    modalClose.focus();
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(){
+    modalBackdrop.style.display = 'none';
+    modalBackdrop.setAttribute('aria-hidden','true');
+    modalBody.innerHTML = '';
+    document.body.style.overflow = '';
+    if(lastFocusedBeforeModal) lastFocusedBeforeModal.focus();
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', (e)=>{
+    if(e.target === modalBackdrop) closeModal();
+  });
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape'){
+      if(modalBackdrop.style.display === 'flex') closeModal();
+    }
+    if(e.key === '/' && document.activeElement !== searchInput){
+      e.preventDefault();searchInput.focus();
+    }
+  });
+
+  // Fetch tree from GitHub
+  async function fetchTree(){
+    try{
+      statusEl.textContent = 'Fetching repository tree from GitHub…';
+      const res = await fetch(API_TREE, {headers:{'Accept':'application/vnd.github.v3+json'}});
+      if(res.status === 403){
+        // rate-limited or forbidden
+        statusEl.innerHTML = '<strong>API rate limit reached or access forbidden.</strong> Fallback: consider creating a personal access token or try again later.';
+        // try to show a fallback: basic manual message
+        return null;
+      }
+      if(!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const data = await res.json();
+      if(!data.tree) throw new Error('Unexpected API response');
+      rawTree = data.tree; // array of {path, mode, type, sha, url}
+      statusEl.textContent = '';
+      return rawTree;
+    }catch(err){
+      console.error(err);
+      statusEl.innerHTML = '<strong>Could not fetch repository tree.</strong> Check owner/repo/branch config or network.';
+      return null;
+    }
+  }
+
+  // Build a nested map from paths for easy rendering
+  function buildTreeMap(tree){
+    // tree: array of {path, type}
+    const map = { '': {folders: new Set(), files: []} };
+    for(const item of tree){
+      const path = item.path;
+      const parts = path.split('/');
+      // walk levels, ensure map nodes exist
+      let accum = '';
+      for(let i=0;i<parts.length;i++){
+        const part = parts[i];
+        const isLast = i === parts.length-1;
+        const parent = accum;
+        const nodeKey = accum + (part) + (isLast && item.type==='blob' ? '' : '/');
+        // ensure parent exists
+        if(!map[parent]) map[parent] = {folders: new Set(), files: []};
+        if(isLast){
+          if(item.type === 'tree'){
+            map[parent].folders.add(part + '/');
+            // ensure child entry
+            const childFull = parent + part + '/';
+            if(!map[childFull]) map[childFull] = {folders: new Set(), files: []};
+          } else if(item.type === 'blob'){
+            // file — add to parent files
+            map[parent].files.push({name:part, path: parent + part});
+          }
+        } else {
+          // ensure intermediate folder recorded
+          map[parent].folders.add(part + '/');
+          accum += part + '/';
+          if(!map[accum]) map[accum] = {folders: new Set(), files: []};
+        }
+      }
+    }
+    // convert folder sets to arrays for deterministic iteration
+    for(const k of Object.keys(map)){
+      map[k].folders = Array.from(map[k].folders).sort();
+      map[k].files = map[k].files.sort((a,b)=>a.name.localeCompare(b.name));
+    }
+    return map;
+  }
+
+  // Render top-level folders as cards
+  function renderTopLevel(){
+    foldersEl.innerHTML = '';
+    const top = treeMap[''];
+    if(!top){
+      foldersEl.innerHTML = '<div class="message">No folders found in the repository root.</div>';
+      return;
+    }
+    const folders = top.folders;
+    if(folders.length === 0){
+      foldersEl.innerHTML = '<div class="message">No top-level folders found.</div>';
+      return;
+    }
+    for(const folder of folders){
+      const name = folder.replace(/\/$/,'');
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.tabIndex = 0;
+      card.setAttribute('role','listitem');
+      card.setAttribute('aria-label', name + ' folder');
+      card.innerHTML = `<div class="name">📁 ${escapeHtml(name)}</div><div class="meta">Folder</div>`;
+      card.addEventListener('click', ()=>openFolder(name + '/'));
+      card.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFolder(name + '/'); } });
+      foldersEl.appendChild(card);
+    }
+  }
+
+  // Open folder 'path' where path includes trailing slash (e.g. 'BSDS 1/')
+  function openFolder(path){
+    currentPath = path;
+    mainView.style.display = 'none';
+    folderView.style.display = 'block';
+    renderBreadcrumbs(path);
+    renderFolderContents(path);
+    searchInput.value = '';
+    searchInput.focus();
+  }
+
+  function renderBreadcrumbs(path){
+    breadcrumbsEl.innerHTML = '';
+    const crumbs = [];
+    let accum = '';
+    const parts = path.split('/').filter(Boolean);
+    crumbs.push({name:'Home', path:''});
+    for(const p of parts){ accum += p + '/'; crumbs.push({name:p, path:accum}); }
+    crumbs.forEach((c,i)=>{
+      const span = document.createElement('div');
+      span.className = 'breadcrumb';
+      span.tabIndex = 0;
+      span.textContent = c.name;
+      span.addEventListener('click', ()=>{
+        if(c.path === ''){ showMain(); } else { openFolder(c.path); }
+      });
+      span.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); if(c.path === ''){ showMain(); } else { openFolder(c.path); } } });
+      breadcrumbsEl.appendChild(span);
+      if(i < crumbs.length-1){
+        const sep = document.createElement('div'); sep.textContent = '›'; sep.style.margin = '0 6px'; sep.style.color = 'var(--muted)'; breadcrumbsEl.appendChild(sep);
+      }
+    });
+  }
+
+  function showMain(){
+    currentPath = '';
+    folderView.style.display = 'none';
+    mainView.style.display = 'block';
+    renderTopLevel();
+  }
+
+  function renderFolderContents(path){
+    const node = treeMap[path];
+    if(!node){ folderContents.innerHTML = '<div class="message">Folder empty or not found.</div>'; return; }
+    // container
+    folderContents.innerHTML = '';
+    // Folders first
+    if(node.folders.length){
+      const fldTitle = document.createElement('div'); fldTitle.className = 'hint'; fldTitle.textContent = 'Folders'; folderContents.appendChild(fldTitle);
+      const ul = document.createElement('ul'); ul.className = 'folder-list';
+      for(const f of node.folders){
+        const li = document.createElement('li'); li.className = 'folder-item';
+        const left = document.createElement('div'); left.style.display='flex';left.style.alignItems='center';left.style.gap='10px';
+        const btn = document.createElement('button'); btn.className='back-btn'; btn.textContent='▸'; btn.setAttribute('aria-label','Expand folder '+f);
+        btn.addEventListener('click', ()=>{
+          // toggle inline expansion
+          if(li.querySelector('.child-contents')){
+            li.removeChild(li.querySelector('.child-contents'));
+            btn.textContent='▸';
+          } else {
+            btn.textContent='▾';
+            const childContainer = document.createElement('div'); childContainer.className='child-contents'; childContainer.style.marginTop='8px'; childContainer.style.marginLeft='42px';
+            // render mini list of this subfolder's immediate children
+            renderMini(nodePath(path,f), childContainer);
+            li.appendChild(childContainer);
+          }
         });
+        btn.tabIndex=0;
+        btn.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); btn.click(); } });
+        const nameSpan = document.createElement('div'); nameSpan.textContent = '📁 '+f.replace(/\/$/,''); nameSpan.style.fontWeight='600';
+        nameSpan.tabIndex=0; nameSpan.addEventListener('click', ()=> openFolder(nodePath(path,f)));
+        nameSpan.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFolder(nodePath(path,f)); } });
+        left.appendChild(btn); left.appendChild(nameSpan);
+        li.appendChild(left);
+        ul.appendChild(li);
+      }
+      folderContents.appendChild(ul);
+    }
+    // Files
+    if(node.files.length){
+      const fTitle = document.createElement('div'); fTitle.className='hint'; fTitle.textContent='Files'; fTitle.style.marginTop='12px'; folderContents.appendChild(fTitle);
+      const div = document.createElement('div');
+      for(const file of node.files){
+        const row = document.createElement('div'); row.className='file-row';
+        const left = document.createElement('div'); left.className='left';
+        const fname = document.createElement('div'); fname.className='file-name'; fname.textContent = file.name;
+        fname.tabIndex=0; fname.setAttribute('role','button'); fname.setAttribute('aria-label','Open file '+file.name);
+        fname.addEventListener('click', ()=> openFile(file.path));
+        fname.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFile(file.path); } });
+        const meta = document.createElement('div'); meta.className='file-meta'; meta.textContent = detectFileType(file.name);
+        left.appendChild(fname); left.appendChild(meta);
+        const right = document.createElement('div');
+        const dl = document.createElement('a'); dl.href = RAW_BASE + file.path; dl.target='_blank'; dl.rel='noopener noreferrer'; dl.className='back-btn'; dl.textContent='Open raw'; dl.setAttribute('aria-label','Open raw file in new tab');
+        right.appendChild(dl);
+        row.appendChild(left); row.appendChild(right);
+        div.appendChild(row);
+      }
+      folderContents.appendChild(div);
+    }
+    if(node.folders.length===0 && node.files.length===0){ folderContents.innerHTML = '<div class="message">This folder is empty.</div>'; }
+  }
 
-        async function fetchAndRender() {
-            try {
-                const response = await fetch(GITHUB_API_URL, {
-                    headers: { 'Accept': 'application/vnd.github.v3+json' }
-                });
-                if (!response.ok) {
-                    throw new Error(`GitHub API request failed: ${response.status}`);
-                }
-                const data = await response.json();
-                allFiles = data.tree;
-                
-                // On initial load, show only top-level folders
-                const topLevelFolders = allFiles.filter(file => file.type === 'tree' && !file.path.includes('/'));
-                const sortedItems = sortItems(topLevelFolders);
+  // Render mini listing for inline expansion (lazy)
+  function renderMini(path, container){
+    const node = treeMap[path];
+    if(!node) { container.innerHTML = '<div class="message">(empty)</div>'; return; }
+    const frag = document.createDocumentFragment();
+    if(node.folders.length){
+      const ul = document.createElement('ul'); ul.style.listStyle='none'; ul.style.padding='0';
+      for(const f of node.folders){
+        const li = document.createElement('li'); li.style.padding='8px 0';
+        const btn = document.createElement('button'); btn.className='back-btn'; btn.textContent='▸'; btn.addEventListener('click', ()=>{
+          // expand deeper
+          if(li.querySelector('.child-contents')){ li.removeChild(li.querySelector('.child-contents')); btn.textContent='▸'; } else { btn.textContent='▾'; const c=document.createElement('div'); c.style.marginLeft='20px'; renderMini(nodePath(path,f), c); li.appendChild(c); }
+        });
+        const span = document.createElement('span'); span.textContent='📁 '+f.replace(/\/$/,''); span.style.marginLeft='8px'; span.tabIndex=0; span.addEventListener('click', ()=> openFolder(nodePath(path,f)));
+        span.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFolder(nodePath(path,f)); } });
+        li.appendChild(btn); li.appendChild(span); ul.appendChild(li);
+      }
+      frag.appendChild(ul);
+    }
+    if(node.files.length){
+      const ul = document.createElement('ul'); ul.style.listStyle='none'; ul.style.padding='0';
+      for(const file of node.files){
+        const li = document.createElement('li'); li.style.padding='6px 0';
+        const link = document.createElement('span'); link.textContent = file.name; link.tabIndex=0; link.style.cursor='pointer'; link.addEventListener('click', ()=> openFile(file.path)); link.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFile(file.path); } });
+        li.appendChild(link); ul.appendChild(li);
+      }
+      frag.appendChild(ul);
+    }
+    container.appendChild(frag);
+  }
 
-                renderPath(sortedItems, '');
-            } catch (error) {
-                console.error('Error fetching repository data:', error);
-                fileListEl.innerHTML = `<li class="loader">Error loading repository. Check console for details.</li>`;
-            }
-        }
-        
-        function getContentsForPath(path) {
-            const items = allFiles.filter(file => {
-                const lastSlashIndex = file.path.lastIndexOf('/');
-                const parentPath = lastSlashIndex === -1 ? '' : file.path.substring(0, lastSlashIndex);
-                return parentPath === path;
-            });
-            return sortItems(items);
-        }
+  function nodePath(parent, child){
+    // parent may be '' or 'a/b/' ; child may be 'c/'
+    return (parent || '') + child;
+  }
 
-        function renderPath(items, path) {
-            renderBreadcrumbs(path);
-            
-            fileListEl.innerHTML = '';
-            if (items.length === 0) {
-                fileListEl.innerHTML = `<li>This directory is empty.</li>`;
-                return;
-            }
+  function detectFileType(name){
+    const low = name.toLowerCase();
+    if(low.endsWith('.pdf')) return 'PDF Document';
+    if(low.endsWith('.md') || low.endsWith('.markdown')) return 'Markdown';
+    if(low.endsWith('.txt')) return 'Text File';
+    if(low.match(/\.(js|py|r|java|c|cpp|json|xml|csv|html|css)$/)) return 'Code/Text File';
+    return 'File';
+  }
 
-            items.forEach(item => {
-                const li = document.createElement('li');
-                const link = document.createElement('a');
-                
-                const icon = getIcon(item.type, item.path);
-                const name = item.path.substring(item.path.lastIndexOf('/') + 1);
-                
-                link.innerHTML = `${icon}<span>${name}</span>`;
-                link.href = "#"; // For accessibility
-                link.setAttribute('role', 'button');
-                link.setAttribute('tabindex', '0');
+  // Open file: for PDFs open iframe modal, for text fetch and show text
+  async function openFile(path){
+    const url = RAW_BASE + path;
+    const name = path.split('/').pop();
+    if(name.toLowerCase().endsWith('.pdf')){
+      openModal(name, url, true);
+      return;
+    }
+    try{
+      modalTitle.textContent = name;
+      modalBody.innerHTML = '<div class="message">Loading file preview…</div>';
+      openModal(name, document.createElement('div'), false);
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Failed to fetch file');
+      const text = await res.text();
+      const pre = document.createElement('pre'); pre.style.whiteSpace='pre-wrap'; pre.style.fontSize='13px'; pre.textContent = text;
+      modalBody.innerHTML = '';
+      modalBody.appendChild(pre);
+    }catch(err){
+      modalBody.innerHTML = '<div class="message">Unable to load preview. Open raw to download.</div>';
+    }
+  }
 
-                if (item.type === 'tree') {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const subItems = getContentsForPath(item.path);
-                        renderPath(subItems, item.path);
-                    });
-                     link.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                           e.preventDefault();
-                           const subItems = getContentsForPath(item.path);
-                           renderPath(subItems, item.path);
-                        }
-                    });
-                } else { // blob
-                    const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${item.path}`;
-                    const extension = item.path.split('.').pop().toLowerCase();
-                    
-                    if (extension === 'pdf') {
-                         link.href = rawUrl;
-                         link.target = '_blank';
-                         link.rel = 'noopener noreferrer';
-                         link.removeAttribute('role');
-                    } else if (TEXT_FILE_EXTENSIONS.includes(extension)) {
-                        link.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            showTextPreview(name, rawUrl);
-                        });
-                        link.addEventListener('keydown', (e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                               e.preventDefault();
-                               showTextPreview(name, rawUrl);
-                            }
-                        });
-                    } else {
-                        link.href = `${GITHUB_REPO_URL}/blob/${REPO_BRANCH}/${item.path}`;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                        link.removeAttribute('role');
-                    }
-                }
-                li.appendChild(link);
-                fileListEl.appendChild(li);
-            });
-        }
-        
-        function renderBreadcrumbs(path) {
-            breadcrumbsEl.innerHTML = '';
-            const homeLink = document.createElement('a');
-            homeLink.textContent = 'Home';
-            homeLink.href = '#';
-            homeLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                const topLevelFolders = allFiles.filter(file => file.type === 'tree' && !file.path.includes('/'));
-                const sortedItems = sortItems(topLevelFolders);
-                renderPath(sortedItems, '');
-            });
-            breadcrumbsEl.appendChild(homeLink);
+  // Simple search within current folder - filters displayed file/folder names
+  function applySearch(term){
+    term = term.trim().toLowerCase();
+    if(currentPath === ''){
+      // filter top-level cards
+      const cards = Array.from(foldersEl.children);
+      cards.forEach(c=>{
+        const name = c.textContent.toLowerCase();
+        c.style.display = name.includes(term) ? '' : 'none';
+      });
+      return;
+    }
+    // else filter folderContents listings
+    // we will re-render but hide non-matching entries
+    renderFolderContents(currentPath);
+    if(!term) return;
+    // hide folder items and files that don't match
+    const items = folderContents.querySelectorAll('.folder-item, .file-row');
+    items.forEach(it=>{
+      const txt = it.textContent.toLowerCase();
+      it.style.display = txt.includes(term) ? '' : 'none';
+    });
+  }
 
-            if (path) {
-                const segments = path.split('/');
-                let currentPath = '';
-                segments.forEach((segment, index) => {
-                    currentPath += (index > 0 ? '/' : '') + segment;
-                    const isLast = index === segments.length - 1;
+  searchInput.addEventListener('input', (e)=> applySearch(e.target.value));
 
-                    breadcrumbsEl.insertAdjacentHTML('beforeend', `<span> / </span>`);
+  backToMainBtn.addEventListener('click', showMain);
 
-                    if (isLast) {
-                        const span = document.createElement('span');
-                        span.textContent = segment;
-                        breadcrumbsEl.appendChild(span);
-                    } else {
-                        const segmentLink = document.createElement('a');
-                        segmentLink.textContent = segment;
-                        segmentLink.href = '#';
-                        const pathToRender = currentPath; // Capture path at this iteration
-                        segmentLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            const subItems = getContentsForPath(pathToRender);
-                            renderPath(subItems, pathToRender);
-                        });
-                        breadcrumbsEl.appendChild(segmentLink);
-                    }
-                });
-            }
-        }
-        
-        async function showTextPreview(filename, url) {
-            previewFilenameEl.textContent = filename;
-            previewTextEl.textContent = 'Loading...';
-            previewContainer.style.display = 'flex';
-            
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to fetch file content.');
-                const text = await response.text();
-                previewTextEl.textContent = text;
-            } catch (error) {
-                previewTextEl.textContent = 'Error loading file preview.';
-                console.error(error);
-            }
-        }
+  // escape HTML helper
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-        function closePreview() {
-            previewContainer.style.display = 'none';
-            previewTextEl.textContent = '';
-            previewFilenameEl.textContent = '';
-        }
+  // Initialize app
+  (async function init(){
+    statusEl.textContent = 'Loading repository structure…';
+    const tree = await fetchTree();
+    if(!tree){ statusEl.textContent = 'Unable to load repository tree.'; return; }
+    treeMap = buildTreeMap(tree);
+    renderTopLevel();
+    statusEl.textContent = '';
+  })();
 
-        function getIcon(type, filename) {
-            const folderIcon = `<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="color: var(--primary-color);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>`;
-            const fileIcon = `<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
-            
-            return type === 'tree' ? folderIcon : fileIcon;
-        }
-
-        function sortItems(items) {
-            return items.sort((a, b) => {
-                if (a.type === 'tree' && b.type === 'blob') return -1;
-                if (a.type === 'blob' && b.type === 'tree') return 1;
-                const nameA = a.path.substring(a.path.lastIndexOf('/') + 1);
-                const nameB = b.path.substring(b.path.lastIndexOf('/') + 1);
-                return nameA.localeCompare(nameB);
-            });
-        }
-    </script>
-
+  // End of script
+  </script>
 </body>
 </html>
