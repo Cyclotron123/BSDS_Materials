@@ -85,7 +85,7 @@ async function openFolder(path){
   catch(e){sideList.innerHTML='<div class="small">Error</div>';}
 }
 
-search.addEventListener('input',()=>{const q=search.value.toLowerCase();sideList.querySelectorAll('.row').forEach(r=>{const n=r.querySelector('div div').textContent.toLowerCase();r.style.display=n.includes(q)?'':'none';});});
+search.addEventListener('input',()=>{const q=search.value.toLowerCase();sideList.querySelectorAll('.row').forEach(r=>{const n=r.querySelector('.left div div').textContent.toLowerCase();r.style.display=n.includes(q)?'':'none';});});
 (function(){const key='themeDark';const saved=localStorage.getItem(key);if(saved==='false')document.body.classList.add('light');themeBtn.onclick=()=>{document.body.classList.toggle('light');localStorage.setItem(key,!document.body.classList.contains('light'));};})();
 loadRoot();
 </script>
