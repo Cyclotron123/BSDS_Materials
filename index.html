@@ -3,184 +3,109 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS Materials</title>
+  <title>BSDS Materials — Vibrant</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     :root{
-      --bg:#f6f8fb;
+      --bg: linear-gradient(180deg,#fff7ed 0%, #fff1f2 100%);
       --card:#ffffff;
-      --muted:#6c757d;
-      --accent:#2563eb;
-      --folder:#fef3c7;
-      --file:#eef2ff;
-      --radius:12px;
-      --shadow: 0 6px 18px rgba(21,30,50,0.06);
+      --muted:#475569;
+      --accent:#ea580c;
+      --accent-2:#8b5cf6;
+      --folder:#ffedd5;
+      --file:#e0f2fe;
+      --radius:16px;
+      --shadow: 0 10px 30px rgba(14,28,80,0.08);
+      --glass: rgba(255,255,255,0.6);
     }
     [data-theme="dark"]{
-      --bg:#0b1220;
-      --card:#0f1724;
-      --muted:#9aa4b2;
-      --accent:#60a5fa;
-      --folder:#4b5563;
-      --file:#1f2937;
+      --bg: linear-gradient(180deg,#081028 0%, #07122a 100%);
+      --card:linear-gradient(180deg,#08182a, #061322);
+      --muted:#9fb4d6;
+      --accent:#ff7a18;
+      --accent-2:#a78bfa;
+      --folder:#3b2b0d;
+      --file:#0b2233;
       --shadow: none;
       color: #e6eef7;
     }
 
     html,body{height:100%}
     body{
-      background: linear-gradient(180deg, var(--bg), #ffffff00 40%);
-      padding:2rem;
+      background: var(--bg);
+      padding:2.25rem;
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      transition: background .25s ease;
+      transition: background .25s ease, color .25s ease;
     }
 
-    .app {
-      max-width:1000px;
-      margin:0 auto;
-    }
+    .app { max-width:1100px; margin:0 auto; }
 
-    .header {
-      display:flex;
-      gap:1rem;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:1rem;
-    }
-
-    .title {
-      display:flex;
-      gap:.75rem;
-      align-items:center;
-    }
-
+    .header { display:flex; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+    .title { display:flex; gap:.75rem; align-items:center; }
     .logo {
-      width:56px;
-      height:56px;
-      border-radius:12px;
-      display:grid;
-      place-items:center;
-      font-weight:700;
-      color:var(--accent);
-      background:linear-gradient(135deg,#dbeafe,#eef2ff);
-      box-shadow:var(--shadow);
+      width:64px; height:64px; border-radius:14px; display:grid; place-items:center; font-weight:800;
+      color:#fff; background: linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:var(--shadow);
     }
 
-    .controls {
-      display:flex;
-      gap:.5rem;
-      align-items:center;
-    }
-
-    .search {
-      flex:1;
-      min-width:220px;
-    }
+    .controls { display:flex; gap:.5rem; align-items:center; }
+    .search { min-width:260px; }
 
     .panel {
-      background:var(--card);
+      background: var(--card);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:1rem;
+      padding:1.1rem;
       overflow:hidden;
+      border: 1px solid rgba(255,255,255,0.6);
+      backdrop-filter: blur(6px);
     }
 
     .tree-row {
-      display:flex;
-      align-items:center;
-      gap:.6rem;
-      padding:.45rem .6rem;
-      border-radius:10px;
-      transition:background .12s ease, transform .12s ease;
-      cursor:default;
+      display:flex; align-items:center; gap:.8rem; padding:.55rem .75rem;
+      border-radius:12px; transition:background .12s ease, transform .12s ease, box-shadow .12s ease;
     }
 
-    .tree-row:hover { background: rgba(37,99,235,0.06); transform:translateY(-1px); }
+    .tree-row:hover { background: linear-gradient(90deg, rgba(234,88,12,0.06), rgba(139,92,246,0.04)); transform:translateY(-3px); box-shadow:0 8px 20px rgba(14,28,80,0.06); }
 
-    .folder-btn {
-      display:flex;
-      align-items:center;
-      gap:.6rem;
-      flex:1;
-      background:transparent;
-      border:0;
-      padding:0;
-      font-weight:600;
-      color:var(--muted);
-      text-align:left;
-    }
-
+    .folder-btn { display:flex; align-items:center; gap:.75rem; flex:1; background:transparent; border:0; padding:0; text-align:left; }
     .folder-emoji {
-      width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
-      background:var(--folder); color:#7c5a00; font-weight:700;
+      width:46px;height:46px;border-radius:10px;display:grid;place-items:center;
+      background: linear-gradient(180deg,#fff1e6,#ffd9b3);
+      color:#9a4200; font-weight:800; font-size:18px;
+      box-shadow:0 6px 18px rgba(234,88,12,0.12);
     }
 
     .file-emoji {
-      width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
-      background:var(--file); color:#1e3a8a; font-weight:700;
+      width:46px;height:46px;border-radius:10px;display:grid;place-items:center;
+      background: linear-gradient(180deg,#e6f6ff,#cfeeff);
+      color:#0c4a6e; font-weight:800; font-size:18px;
+      box-shadow:0 6px 18px rgba(14,165,233,0.08);
     }
 
     .nested {
-      padding-left:1.2rem;
-      border-left:1px dashed rgba(99,102,241,0.06);
-      margin-left:.6rem;
-      overflow:hidden;
-      transition:max-height .24s cubic-bezier(.2,.9,.2,1),opacity .18s ease;
-      max-height:0;
-      opacity:0;
+      padding-left:1.2rem; margin-left:.6rem; transition:max-height .28s cubic-bezier(.2,.9,.2,1),opacity .18s ease;
+      max-height:0; opacity:0; overflow:hidden; border-left:2px solid rgba(139,92,246,0.07);
     }
+    .nested.open { max-height:1400px; opacity:1; }
 
-    .nested.open {
-      max-height:1200px;
-      opacity:1;
-    }
+    .small { font-size:.85rem; color:var(--muted); }
 
-    .small {
-      font-size:.85rem;
-      color:var(--muted);
-    }
+    .breadcrumb { gap:.5rem; display:flex; align-items:center; flex-wrap:wrap; }
+    .kbd { background:linear-gradient(90deg,#fff7ed,#fff1f2); padding:.18rem .46rem; border-radius:8px; font-size:.78rem; color:var(--accent); border:1px solid rgba(234,88,12,0.08); }
 
-    .breadcrumb {
-      gap:.5rem;
-      display:flex;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .kbd {
-      background:#eef2ff;
-      padding:.15rem .4rem;
-      border-radius:6px;
-      font-size:.78rem;
-      color:var(--accent);
-      border:1px solid rgba(37,99,235,0.08);
-    }
-
-    .empty {
-      text-align:center;
-      padding:2rem;
-      color:var(--muted);
-    }
-
-    .spinner {
-      width:26px;height:26px;border-radius:50%;
-      border:3px solid rgba(0,0,0,0.06);
-      border-top-color:var(--accent);
-      animation:spin .8s linear infinite;
-    }
-
+    .empty { text-align:center; padding:2rem; color:var(--muted); }
+    .spinner { width:28px; height:28px; border-radius:50%; border:3px solid rgba(0,0,0,0.06); border-top-color:var(--accent); animation:spin .8s linear infinite; }
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    .error { color:#b91c1c; font-weight:600; }
+    .error { color:#b91c1c; font-weight:700; }
 
-    .file-link { color:var(--accent); text-decoration:none; font-weight:600; }
-    .file-link:hover { text-decoration:underline; }
-
-    .muted { color:var(--muted); }
+    .file-link { color:var(--accent-2); text-decoration:none; font-weight:700; }
+    .file-link:hover { text-decoration:underline; color:var(--accent); }
 
     @media (max-width:720px){
       .header { flex-direction:column; align-items:stretch; gap:.6rem; }
-      .controls { justify-content:space-between; width:100%;}
+      .controls { justify-content:space-between; width:100%; }
+      .search { min-width:unset; width:100%; }
     }
   </style>
 </head>
@@ -191,14 +116,14 @@
         <div class="logo">BS</div>
         <div>
           <h3 class="mb-0">BSDS Materials</h3>
-          <div class="small muted">Organized notes and documents with quick search and keyboard navigation</div>
+          <div class="small muted">Vibrant, friendly, and fast file browser</div>
         </div>
       </div>
 
       <div class="controls">
         <input id="search" class="form-control search" placeholder="Search files or folders. Press / to focus" />
         <div class="d-flex gap-2 align-items-center">
-          <button id="themeToggle" class="btn btn-outline-secondary btn-sm" title="Toggle theme">Toggle theme</button>
+          <button id="themeToggle" class="btn btn-sm" style="background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:0;">Theme</button>
           <div id="loading" style="display:none" class="spinner" title="Loading"></div>
         </div>
       </div>
@@ -212,15 +137,11 @@
         <div class="small muted">Use arrow keys to navigate • <span class="kbd">Enter</span> to open</div>
       </div>
 
-      <div id="file-tree" class="d-grid gap-1"></div>
+      <div id="file-tree" class="d-grid gap-2"></div>
 
-      <div id="empty" class="empty mt-3" style="display:none">
-        No results found.
-      </div>
+      <div id="empty" class="empty mt-3" style="display:none">No results found.</div>
 
-      <div id="error" class="mt-3" style="display:none">
-        <div class="error">Failed to load repository. Please check repository name, branch, or network and try again.</div>
-      </div>
+      <div id="error" class="mt-3" style="display:none"><div class="error">Failed to load repository. Check repo name, branch, or network.</div></div>
     </div>
   </div>
 
@@ -241,9 +162,7 @@
     let currentPath = "";
     let allRows = [];
 
-    function showLoading(show){
-      loading.style.display = show ? 'inline-block' : 'none';
-    }
+    function showLoading(show){ loading.style.display = show ? 'inline-block' : 'none'; }
 
     function setBreadcrumb(path){
       breadcrumbs.innerHTML = '';
@@ -256,7 +175,7 @@
       breadcrumbs.appendChild(home);
 
       let built = '';
-      parts.forEach((p, i) => {
+      parts.forEach((p) => {
         built = built ? built + '/' + p : p;
         const sep = document.createElement('div');
         sep.className = 'small muted';
@@ -282,16 +201,10 @@
         const data = await res.json();
         cache[cacheKey] = data;
         return data;
-      } finally {
-        showLoading(false);
-      }
+      } finally { showLoading(false); }
     }
 
-    function clearTree(){
-      treeRoot.innerHTML = '';
-      allRows = [];
-      focusedRow = null;
-    }
+    function clearTree(){ treeRoot.innerHTML = ''; allRows = []; focusedRow = null; }
 
     function createFileRow(item){
       const row = document.createElement('div');
@@ -302,7 +215,7 @@
       row.innerHTML = `
         <div class="file-emoji">📄</div>
         <div style="flex:1">
-          <div style="font-weight:600">${item.name}</div>
+          <div style="font-weight:700; color:var(--accent-2)">${item.name}</div>
           <div class="small muted">${item.path}</div>
         </div>
         <div class="small"><a class="file-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a></div>
@@ -320,7 +233,7 @@
         <button class="folder-btn" title="Expand folder">
           <div class="folder-emoji">📁</div>
           <div style="flex:1; text-align:left;">
-            <div style="font-weight:700; color:var(--muted)">${item.name}</div>
+            <div style="font-weight:800; color:var(--accent)">${item.name}</div>
             <div class="small muted">${item.path}</div>
           </div>
           <div class="small muted">Expand</div>
@@ -332,22 +245,17 @@
     async function buildTree(container, path = ""){
       try {
         const items = await fetchRepoTree(path);
-        if(!Array.isArray(items)) {
-          throw new Error('Unexpected response');
-        }
+        if(!Array.isArray(items)) throw new Error('Unexpected response');
         items.sort((a,b) => {
           if(a.type === b.type) return a.name.localeCompare(b.name);
           return a.type === 'dir' ? -1 : 1;
         });
 
-        if(items.length === 0){
-          container.innerHTML = '<div class="empty">This folder is empty</div>';
-          return;
-        }
+        if(items.length === 0){ container.innerHTML = '<div class="empty">This folder is empty</div>'; return; }
 
         for(const item of items){
           const wrapper = document.createElement('div');
-          wrapper.style.marginBottom = '.25rem';
+          wrapper.style.marginBottom = '.35rem';
 
           if(item.type === 'dir'){
             const row = createFolderRow(item);
@@ -373,23 +281,15 @@
 
             row.addEventListener('keydown', (ev) => {
               if(ev.key === 'Enter') row.querySelector('.folder-btn').click();
-              if(ev.key === 'ArrowRight') {
-                if(!nested.classList.contains('open')) row.querySelector('.folder-btn').click();
-              }
-              if(ev.key === 'ArrowLeft') {
-                if(nested.classList.contains('open')) row.querySelector('.folder-btn').click();
-              }
+              if(ev.key === 'ArrowRight') { if(!nested.classList.contains('open')) row.querySelector('.folder-btn').click(); }
+              if(ev.key === 'ArrowLeft') { if(nested.classList.contains('open')) row.querySelector('.folder-btn').click(); }
             });
 
             allRows.push(row);
           } else {
             const row = createFileRow(item);
             wrapper.appendChild(row);
-            row.addEventListener('keydown', (ev) => {
-              if(ev.key === 'Enter') {
-                window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank');
-              }
-            });
+            row.addEventListener('keydown', (ev) => { if(ev.key === 'Enter') window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank'); });
             allRows.push(row);
           }
 
@@ -414,8 +314,8 @@
       const q = (searchInput.value || '').trim().toLowerCase();
       let visible = 0;
       allRows.forEach(r => {
-        const name = r.querySelector('div > div')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
-        if(!q || name.includes(q)){
+        const title = r.querySelector('div > div')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
+        if(!q || title.includes(q)){
           r.style.display = '';
           visible++;
         } else {
@@ -425,43 +325,21 @@
       emptyEl.style.display = visible === 0 ? '' : 'none';
     }
 
-    // keyboard focus navigation
     document.addEventListener('keydown', (e) => {
-      if(e.key === '/') {
-        e.preventDefault();
-        searchInput.focus();
-        return;
-      }
+      if(e.key === '/') { e.preventDefault(); searchInput.focus(); return; }
       if(document.activeElement === searchInput) return;
       const visibleRows = allRows.filter(r => r.style.display !== 'none');
       if(visibleRows.length === 0) return;
       let idx = visibleRows.indexOf(focusedRow);
-      if(e.key === 'ArrowDown') {
-        idx = idx < visibleRows.length - 1 ? idx + 1 : 0;
-        setFocus(visibleRows[idx]);
-        e.preventDefault();
-      } else if(e.key === 'ArrowUp') {
-        idx = idx > 0 ? idx - 1 : visibleRows.length - 1;
-        setFocus(visibleRows[idx]);
-        e.preventDefault();
-      }
+      if(e.key === 'ArrowDown') { idx = idx < visibleRows.length - 1 ? idx + 1 : 0; setFocus(visibleRows[idx]); e.preventDefault(); }
+      else if(e.key === 'ArrowUp') { idx = idx > 0 ? idx - 1 : visibleRows.length - 1; setFocus(visibleRows[idx]); e.preventDefault(); }
     });
 
-    function setFocus(el){
-      if(focusedRow) focusedRow.classList.remove('focused');
-      focusedRow = el;
-      if(!focusedRow) return;
-      focusedRow.focus();
-    }
+    function setFocus(el){ if(focusedRow) focusedRow.classList.remove('focused'); focusedRow = el; if(!focusedRow) return; focusedRow.focus(); }
 
-    // search debounce
     let tId = null;
-    searchInput.addEventListener('input', () => {
-      clearTimeout(tId);
-      tId = setTimeout(filterAndShow, 180);
-    });
+    searchInput.addEventListener('input', () => { clearTimeout(tId); tId = setTimeout(filterAndShow, 160); });
 
-    // theme toggle with persistence (localStorage)
     function applyTheme(theme){
       if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
       else document.documentElement.removeAttribute('data-theme');
@@ -474,7 +352,6 @@
     const savedTheme = localStorage.getItem('bsds_theme') || 'light';
     applyTheme(savedTheme);
 
-    // initial load
     navigateTo('');
   </script>
 </body>
