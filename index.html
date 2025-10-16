@@ -1,32 +1,307 @@
-                </ul>
-            </li>
-            
-            <li class="folder" onclick="toggleFolder('folder4')">Projects
-                <ul id="folder4" class="subfolder">
-                    <li class="file">Project1_Code.py - <a href="https://github.com/Cyclotron123/BSDS_Materials/blob/main/Projects/Project1_Code.py" target="_blank">View</a></li>
-                    <li class="folder" onclick="toggleFolder('subfolder4_1')">Subfolder: Resources
-                        <ul id="subfolder4_1" class="subfolder">
-                            <li class="file">Resource1.zip - <a href="https://github.com/Cyclotron123/BSDS_Materials/blob/main/Projects/Resources/Resource1.zip" target="_blank">View</a></li>
-                            <li class="file">Resource2.pdf - <a href="https://github.com/Cyclotron123/BSDS_Materials/blob/main/Projects/Resources/Resource2.pdf" target="_blank">View</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-            
-            <!-- Add more folders/files as needed based on your repo -->
-        </ul>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSDS Materials - File Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2332 0%, #2d3e50 100%);
+            color: #e8eaed;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #5b9bd5;
+        }
+
+        .subtitle {
+            color: #a8b5c4;
+            font-size: 1.1em;
+        }
+
+        .breadcrumb {
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb-item {
+            color: #5b9bd5;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .breadcrumb-item:hover {
+            color: #7db3e8;
+            text-decoration: underline;
+        }
+
+        .breadcrumb-separator {
+            color: #a8b5c4;
+        }
+
+        .file-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .file-item {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-item:hover {
+            background: rgba(91, 155, 213, 0.15);
+            border-color: rgba(91, 155, 213, 0.3);
+            transform: translateX(5px);
+        }
+
+        .icon {
+            font-size: 1.5em;
+            width: 30px;
+            text-align: center;
+        }
+
+        .folder-icon {
+            color: #5b9bd5;
+        }
+
+        .file-icon {
+            color: #a8b5c4;
+        }
+
+        .file-name {
+            flex: 1;
+            font-size: 1.05em;
+        }
+
+        .file-type {
+            color: #a8b5c4;
+            font-size: 0.9em;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a8b5c4;
+            font-size: 1.2em;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #e88b8b;
+            background: rgba(232, 139, 139, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(232, 139, 139, 0.3);
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(91, 155, 213, 0.2);
+            border: 1px solid rgba(91, 155, 213, 0.4);
+            border-radius: 8px;
+            color: #5b9bd5;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            background: rgba(91, 155, 213, 0.3);
+            transform: translateX(-5px);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 BSDS Materials</h1>
+            <p class="subtitle">Browse repository files and folders</p>
+        </header>
+
+        <div id="breadcrumb" class="breadcrumb"></div>
+        <div id="backButton"></div>
+        <div id="content" class="loading">Loading repository contents...</div>
     </div>
+
     <script>
-        function toggleFolder(id) {
-            var element = document.getElementById(id);
-            if (element.style.display === 'block') {
-                element.style.display = 'none';  // Collapse
-                element.classList.remove('active');
-            } else {
-                element.style.display = 'block';  // Expand
-                element.classList.add('active');
+        const REPO_OWNER = 'Cyclotron123';
+        const REPO_NAME = 'BSDS_Materials';
+        const BRANCH = 'main';
+        
+        let currentPath = '';
+        let pathHistory = [''];
+
+        async function fetchContents(path = '') {
+            const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}?ref=${BRANCH}`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Failed to fetch contents');
+                return await response.json();
+            } catch (error) {
+                console.error('Error:', error);
+                return null;
             }
         }
+
+        function renderBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            const parts = currentPath ? currentPath.split('/') : [];
+            
+            let html = '<span class="breadcrumb-item" onclick="navigateTo(\'\')">🏠 Home</span>';
+            
+            let pathBuilder = '';
+            parts.forEach((part, index) => {
+                pathBuilder += (pathBuilder ? '/' : '') + part;
+                const thisPath = pathBuilder;
+                html += '<span class="breadcrumb-separator">›</span>';
+                html += `<span class="breadcrumb-item" onclick="navigateTo('${thisPath}')">${part}</span>`;
+            });
+            
+            breadcrumb.innerHTML = html;
+        }
+
+        function renderBackButton() {
+            const backButtonDiv = document.getElementById('backButton');
+            if (currentPath) {
+                backButtonDiv.innerHTML = `
+                    <div class="back-button" onclick="goBack()">
+                        ← Back
+                    </div>
+                `;
+            } else {
+                backButtonDiv.innerHTML = '';
+            }
+        }
+
+        function getFileExtension(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            return ext !== filename ? ext : '';
+        }
+
+        async function navigateTo(path) {
+            currentPath = path;
+            if (!pathHistory[pathHistory.length - 1] === path) {
+                pathHistory.push(path);
+            }
+            await renderContents();
+        }
+
+        function goBack() {
+            if (pathHistory.length > 1) {
+                pathHistory.pop();
+                currentPath = pathHistory[pathHistory.length - 1];
+                renderContents();
+            }
+        }
+
+        async function renderContents() {
+            const contentDiv = document.getElementById('content');
+            contentDiv.className = 'loading';
+            contentDiv.textContent = 'Loading...';
+            
+            renderBreadcrumb();
+            renderBackButton();
+
+            const contents = await fetchContents(currentPath);
+            
+            if (!contents) {
+                contentDiv.className = 'error';
+                contentDiv.textContent = '❌ Error loading contents. Please try again.';
+                return;
+            }
+
+            const folders = contents.filter(item => item.type === 'dir').sort((a, b) => a.name.localeCompare(b.name));
+            const files = contents.filter(item => item.type === 'file').sort((a, b) => a.name.localeCompare(b.name));
+            
+            let html = '<div class="file-list">';
+            
+            folders.forEach(folder => {
+                html += `
+                    <div class="file-item" onclick="navigateTo('${folder.path}')">
+                        <span class="icon folder-icon">📁</span>
+                        <span class="file-name">${folder.name}</span>
+                        <span class="file-type">Folder</span>
+                    </div>
+                `;
+            });
+            
+            files.forEach(file => {
+                const ext = getFileExtension(file.name);
+                const fileType = ext ? ext.toUpperCase() : 'File';
+                html += `
+                    <a href="${file.html_url}" target="_blank">
+                        <div class="file-item">
+                            <span class="icon file-icon">📄</span>
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-type">${fileType}</span>
+                        </div>
+                    </a>
+                `;
+            });
+            
+            html += '</div>';
+            
+            contentDiv.className = '';
+            contentDiv.innerHTML = html;
+        }
+
+        // Initialize
+        renderContents();
     </script>
 </body>
 </html>
