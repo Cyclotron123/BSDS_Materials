@@ -3,234 +3,238 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS_Materials — File Manager</title>
+  <title>BSDS_Materials — Minimal File Manager</title>
+
   <style>
     :root{
-      --bg-900:#021026; --bg-800:#052241; --accent:#4fc3f7; --muted:#9fb7cf;
-      --card:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      --radius:10px; --shadow:0 8px 28px rgba(2,16,38,0.6); --mono:system-ui,Segoe UI,Roboto,Arial;
+      --bg-900:#021026;
+      --bg-800:#06243b;
+      --accent:#4fc3f7;
+      --muted:#9fb7cf;
+      --card:rgba(255,255,255,0.02);
+      --radius:10px;
+      --mono:Inter, "Segoe UI", Roboto, system-ui, Arial;
     }
-    html,body{height:100%;margin:0;font-family:var(--mono);background:
-      radial-gradient(1000px 400px at 10% 10%, rgba(79,195,247,0.04), transparent),
-      linear-gradient(180deg,var(--bg-900),var(--bg-800));color:#dbeefb;
-      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;padding:20px;}
-    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;}
+
+    /* page */
+    html,body{height:100%;margin:0;font-family:var(--mono);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    body{
+      background: linear-gradient(180deg,var(--bg-900),var(--bg-800));
+      color:#dbeefb;
+      padding:20px;
+      box-sizing:border-box;
+    }
+
+    /* layout */
+    .wrap{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
     header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    h1{margin:0;font-size:20px;color:#eaf8ff}
-    .panel{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.02)}
+    h1{margin:0;font-size:18px;color:#eaf8ff}
+
+    /* panels */
+    .panel{background:var(--card);border-radius:var(--radius);padding:12px;border:1px solid rgba(255,255,255,0.03)}
+    .main{min-height:260px}
+    .sidebar{min-height:260px}
+
+    /* minimal controls */
     .controls{display:flex;gap:8px;align-items:center}
     .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px}
-    .btn.primary{background:linear-gradient(90deg, rgba(79,195,247,0.10), rgba(79,195,247,0.06));border-color:rgba(79,195,247,0.18);color:var(--accent);font-weight:600}
-    .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-    .item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;cursor:pointer}
-    .item:hover{background:rgba(255,255,255,0.01)}
-    .left{display:flex;gap:12px;align-items:center}
-    .icon{width:36px;height:36;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
-    .name{font-weight:600;color:#e8f7ff}
+    .btn.primary{color:var(--accent);border-color:rgba(79,195,247,0.14)}
+
+    /* folder grid (simple, like your screenshot) */
+    .grid{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+    .tile{width:140px;height:120px;border-radius:10px;background:rgba(255,255,255,0.01);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+    .tile:hover{background:rgba(79,195,247,0.02)}
+    .tile .ico{font-size:36px;color:var(--accent);margin-bottom:8px}
+    .tile .label{font-weight:600;color:#e8f7ff}
+
+    /* file list simple */
+    .list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px}
+    .left{display:flex;gap:10px;align-items:center}
+    .file-ico{width:34px;height:34;border-radius:6px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--accent)}
     .meta{color:var(--muted);font-size:13px}
-    .sidebar{position:relative}
-    input[type="search"]{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.01);color:inherit}
-    .sub-list{margin-top:10px;padding-left:8px;border-left:1px dashed rgba(255,255,255,0.02)}
-    a.file-link{color:var(--muted);font-size:13px;text-decoration:none}
+    input[type="search"]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
+
+    /* small */
     .small{font-size:13px;color:var(--muted)}
-    .hidden{display:none}
-    @media(max-width:980px){.wrap{grid-template-columns:1fr}.sidebar{order:2}}
-    /* light */
-    body.light{--bg-900:#f7fafc;--bg-800:#f0f4f8;--accent:#0b63b7;--muted:#374151;background:linear-gradient(180deg,#f7fbff,#eef6ff);color:#0b2b3a}
+
+    /* light variant */
+    body.light{
+      --bg-900:#f7fafc;--bg-800:#eef6ff;--accent:#0b63b7;--muted:#374151;
+      background: linear-gradient(180deg,#f7fbff,#eef6ff);color:#0b2b3a;
+    }
+
+    @media (max-width:920px){
+      .wrap{grid-template-columns:1fr; padding:12px}
+      .sidebar{order:2}
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div>
-        <h1>BSDS_Materials — File Manager</h1>
-        <div class="small">Explorer for repository content</div>
+        <h1>BSDS_Materials</h1>
+        <div class="small">Minimal dark-blue file manager</div>
       </div>
+
       <div class="controls">
-        <button id="themeToggle" class="btn">Toggle Theme</button>
-        <a id="gh" class="btn primary" href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank" rel="noreferrer">Open on GitHub</a>
+        <button id="themeBtn" class="btn">Toggle Theme</button>
+        <a class="btn primary" href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank" rel="noreferrer">GitHub</a>
       </div>
     </header>
 
-    <main class="panel" id="mainPanel">
+    <main class="panel main" id="mainPanel">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Primary folders</strong>
-        <div class="small" id="rootCount">loading…</div>
+        <strong>Top-level folders</strong>
+        <div id="count" class="small">—</div>
       </div>
-      <div class="list" id="rootList"></div>
-      <div class="small" style="margin-top:12px">Click a folder to view subfolders and files. Use search in sidebar to filter.</div>
+
+      <div id="grid" class="grid" aria-live="polite"></div>
+
+      <div id="filesFallback" class="list" style="display:none"></div>
     </main>
 
     <aside class="panel sidebar">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <strong id="sideTitle">Details</strong>
-        <div class="small" id="sidePath">/</div>
+        <div id="sidePath" class="small">/</div>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <input id="search" type="search" placeholder="Filter files and folders" />
-        <button id="collapseAll" class="btn">Collapse</button>
+      <div style="margin-top:10px">
+        <input id="search" type="search" placeholder="Filter files" />
       </div>
 
-      <div id="sideContent" style="margin-top:12px">
-        <div class="small">Select a folder to view its contents.</div>
+      <div id="sideList" style="margin-top:12px" class="list">
+        <div class="small">Select a folder to see contents.</div>
       </div>
     </aside>
   </div>
 
   <script>
-    // Repo config
+    // repo settings
     const owner = 'Cyclotron123';
     const repo = 'BSDS_Materials';
     const branch = 'main';
 
-    // Basic helpers
-    const rootList = document.getElementById('rootList');
-    const rootCount = document.getElementById('rootCount');
+    // DOM
+    const grid = document.getElementById('grid');
+    const count = document.getElementById('count');
     const sideTitle = document.getElementById('sideTitle');
     const sidePath = document.getElementById('sidePath');
-    const sideContent = document.getElementById('sideContent');
+    const sideList = document.getElementById('sideList');
     const search = document.getElementById('search');
-    const collapseAll = document.getElementById('collapseAll');
+    const themeBtn = document.getElementById('themeBtn');
 
-    function apiUrl(path=''){ const p = path ? encodeURIComponent(path) : ''; return `https://api.github.com/repos/${owner}/${repo}/contents/${p}?ref=${branch}`; }
-    function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-    function formatBytes(bytes){ if(!bytes) return ''; const k=1024,s=['B','KB','MB','GB']; const i=Math.floor(Math.log(bytes)/Math.log(k)); return (bytes/Math.pow(k,i)).toFixed(2)+' '+s[i]; }
-
-    // Map extension to emoji/icon and action type
-    function extInfo(name){
-      const ext = (name.split('.').pop() || '').toLowerCase();
-      const map = {
-        'md': ['📄','text'], 'txt':['📄','text'],'pdf':['📕','file'],
-        'zip':['🗜️','file'],'tar':['🗜️','file'],'gz':['🗜️','file'],
-        'jpg':['🖼️','image'],'jpeg':['🖼️','image'],'png':['🖼️','image'],'gif':['🖼️','image'],
-        'py':['🐍','code'],'ipynb':['📓','notebook'],'js':['🟨','code'],'html':['🌐','code'],'css':['🎨','code'],
-        'csv':['📑','data'],'xlsx':['📊','data'],'pptx':['📽️','file'],
-        'pdf':['📕','file'],'R':['📈','code']
-      };
-      return map[ext] || ['📄','file'];
-    }
+    // get GitHub contents
+    function api(path=''){ const p = path ? encodeURIComponent(path) : ''; return `https://api.github.com/repos/${owner}/${repo}/contents/${p}?ref=${branch}`; }
 
     async function fetchContents(path=''){
-      const res = await fetch(apiUrl(path), {headers:{Accept:'application/vnd.github.v3+json'}});
-      if(!res.ok) throw new Error('GitHub API error '+res.status);
-      return res.json();
+      const r = await fetch(api(path), { headers:{ Accept:'application/vnd.github.v3+json' }});
+      if(!r.ok) throw new Error('GitHub API ' + r.status);
+      return r.json();
     }
 
-    async function loadRoot(){
-      rootList.innerHTML = 'loading…';
+    function extIcon(name){
+      const ext = (name.split('.').pop()||'').toLowerCase();
+      const map = { md:'📄', txt:'📄', pdf:'📕', png:'🖼️', jpg:'🖼️', jpeg:'🖼️', py:'🐍', r:'📈', go:'🐹', ipynb:'📓' };
+      return map[ext] || '📄';
+    }
+
+    function mkTile(name, path){
+      const t = document.createElement('div');
+      t.className = 'tile';
+      t.innerHTML = `<div class="ico">📁</div><div class="label">${name}</div>`;
+      t.onclick = ()=> openFolder(path);
+      return t;
+    }
+
+    function mkFileRow(item){
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `<div class="left"><div class="file-ico">${extIcon(item.name)}</div>
+        <div><div class="name">${item.name}</div><div class="meta">${item.type} ${item.size?('• '+Math.round(item.size/1024)+' KB'):''}</div></div></div>
+        <div></div>`;
+      const actionWrap = row.querySelector('div:last-child');
+      if(item.type === 'file'){
+        const view = document.createElement('a'); view.className='btn'; view.textContent='View'; view.href=item.html_url; view.target='_blank'; view.rel='noreferrer';
+        const raw = document.createElement('a'); raw.className='btn'; raw.textContent='Raw'; raw.href=item.download_url || item.html_url.replace('/blob/','/raw/'); raw.target='_blank'; raw.rel='noreferrer';
+        actionWrap.appendChild(view); actionWrap.appendChild(raw);
+      } else {
+        const open = document.createElement('button'); open.className='btn'; open.textContent='Open'; open.onclick = ()=> openFolder(item.path);
+        actionWrap.appendChild(open);
+      }
+      return row;
+    }
+
+    // load top-level folders visually
+    async function loadTop(){
+      grid.innerHTML = 'loading…';
       try{
         const items = await fetchContents('');
         const dirs = items.filter(i=> i.type === 'dir');
-        rootList.innerHTML = '';
-        rootCount.textContent = dirs.length + ' folders';
-        if(dirs.length === 0) rootList.innerHTML = '<div class="small">No folders found.</div>';
-        for(const d of dirs){
-          const item = document.createElement('div'); item.className = 'item'; item.dataset.path = d.path;
-          item.innerHTML = `<div class="left"><div class="icon">📁</div><div><div class="name">${escapeHtml(d.name)}</div><div class="meta">directory</div></div></div>
-            <div style="display:flex;gap:8px;align-items:center"><button class="btn">Open</button></div>`;
-          item.querySelector('button').addEventListener('click', e=>{ e.stopPropagation(); openFolder(d.path); });
-          item.addEventListener('click', ()=> openFolder(d.path));
-          rootList.appendChild(item);
+        grid.innerHTML = '';
+        count.textContent = dirs.length + ' folders';
+        if(dirs.length === 0){
+          grid.innerHTML = '<div class="small">No folders</div>';
+          return;
         }
-      }catch(e){ rootList.innerHTML = '<div class="small">Unable to load repository.</div>'; console.error(e); }
+        dirs.forEach(d => grid.appendChild(mkTile(d.name, d.path)));
+      }catch(err){
+        grid.innerHTML = '<div class="small">Unable to load</div>';
+        console.error(err);
+      }
     }
 
+    // open folder -> populate sidebar
     async function openFolder(path){
-      sideTitle.textContent = path.split('/').slice(-1)[0] || '/';
-      sidePath.textContent = '/'+path;
-      sideContent.innerHTML = '<div class="small">loading…</div>';
+      sideTitle.textContent = path.split('/').pop() || '/';
+      sidePath.textContent = '/' + path;
+      sideList.innerHTML = 'loading…';
       try{
         const items = await fetchContents(path);
-        items.sort((a,b)=> a.type===b.type ? a.name.localeCompare(b.name) : (a.type==='dir'?-1:1));
-        const container = document.createElement('div');
-        container.className = 'sub-list';
-        for(const it of items){
-          const row = document.createElement('div'); row.className = 'item'; row.style.cursor='default';
-          const [icon, kind] = it.type === 'dir' ? ['📁','dir'] : extInfo(it.name);
-          const size = it.type==='file' ? formatBytes(it.size) : 'directory';
-          row.innerHTML = `<div class="left"><div class="icon">${icon}</div><div><div class="name">${escapeHtml(it.name)}</div><div class="meta">${size}</div></div></div>
-            <div style="display:flex;gap:8px;align-items:center"></div>`;
-          const ctrl = row.querySelector('div[style^="display:flex"]');
-          if(it.type === 'dir'){
-            const btn = document.createElement('button'); btn.className='btn'; btn.textContent='Expand';
-            btn.addEventListener('click', async (e)=>{
-              e.stopPropagation();
-              if(btn.dataset.open==='1'){ // collapse
-                const next = row.nextElementSibling;
-                if(next && next.classList.contains('sub-list')) next.remove();
-                btn.dataset.open='0'; btn.textContent='Expand';
-              } else {
-                btn.disabled=true; btn.textContent='Loading…';
-                try{
-                  const subs = await fetchContents(it.path);
-                  const subcont = document.createElement('div'); subcont.className='sub-list';
-                  subs.sort((a,b)=> a.type===b.type ? a.name.localeCompare(b.name) : (a.type==='dir'?-1:1));
-                  for(const s of subs){
-                    const [si,sk] = s.type==='dir' ? ['📁','dir'] : extInfo(s.name);
-                    const subrow = document.createElement('div'); subrow.className='item'; subrow.style.padding='8px';
-                    subrow.innerHTML = `<div class="left"><div class="icon">${si}</div><div><div class="name">${escapeHtml(s.name)}</div><div class="meta">${s.type}</div></div></div>
-                      <div style="display:flex;gap:8px;align-items:center"></div>`;
-                    const sc = subrow.querySelector('div[style^="display:flex"]');
-                    if(s.type==='file'){
-                      const view = document.createElement('a'); view.className='btn'; view.textContent='View'; view.href=s.html_url; view.target='_blank'; view.rel='noreferrer';
-                      const raw = document.createElement('a'); raw.className='btn'; raw.textContent='Raw'; raw.href=s.download_url || s.html_url.replace('/blob/','/raw/'); raw.target='_blank'; raw.rel='noreferrer';
-                      sc.appendChild(view); sc.appendChild(raw);
-                    } else {
-                      const open = document.createElement('button'); open.className='btn'; open.textContent='Open'; open.addEventListener('click', ()=> openFolder(s.path));
-                      sc.appendChild(open);
-                    }
-                    subcont.appendChild(subrow);
-                  }
-                  row.insertAdjacentElement('afterend', subcont);
-                  btn.dataset.open='1'; btn.textContent='Collapse';
-                }catch(err){ console.error(err); btn.textContent='Error'; }
-                finally{ btn.disabled=false; }
-              }
-            });
-            ctrl.appendChild(btn);
-          } else {
-            const view = document.createElement('a'); view.className='btn'; view.textContent='View'; view.href=it.html_url; view.target='_blank'; view.rel='noreferrer';
-            const raw = document.createElement('a'); raw.className='btn'; raw.textContent='Raw'; raw.href=it.download_url || it.html_url.replace('/blob/','/raw/'); raw.target='_blank'; raw.rel='noreferrer';
-            ctrl.appendChild(view); ctrl.appendChild(raw);
-          }
-          container.appendChild(row);
-        }
-        sideContent.innerHTML = ''; sideContent.appendChild(container);
-      }catch(e){ sideContent.innerHTML = '<div class="small">Unable to load folder.</div>'; console.error(e); }
+        items.sort((a,b)=> a.type === b.type ? a.name.localeCompare(b.name) : (a.type==='dir'?-1:1));
+        sideList.innerHTML = '';
+        items.forEach(it => sideList.appendChild(mkFileRow(it)));
+      }catch(err){
+        sideList.innerHTML = '<div class="small">Unable to load</div>';
+        console.error(err);
+      }
     }
 
-    // Filter inside side content
-    search.addEventListener('input', ()=> {
+    // search filter
+    search.addEventListener('input', ()=>{
       const q = search.value.trim().toLowerCase();
-      const rows = sideContent.querySelectorAll('.item');
-      rows.forEach(r => {
+      const rows = sideList.querySelectorAll('.row');
+      rows.forEach(r=>{
         const name = r.querySelector('.name')?.textContent?.toLowerCase() || '';
         r.style.display = name.includes(q) ? '' : 'none';
       });
     });
 
-    collapseAll.addEventListener('click', ()=>{
-      const opens = sideContent.querySelectorAll('button[data-open="1"]');
-      opens.forEach(b=> { b.dataset.open='0'; b.textContent='Expand'; const next=b.closest('.item')?.nextElementSibling; if(next && next.classList.contains('sub-list')) next.remove(); });
-    });
-
-    // Theme toggle persisted
+    // theme toggle persisted
     (function(){
-      const key='bsds_theme_dark';
-      const btn=document.getElementById('themeToggle');
-      const setDark = v => document.body.classList.toggle('light', !v);
-      let val = localStorage.getItem(key);
-      if(val===null) { localStorage.setItem(key,'true'); val='true'; }
-      setDark(val==='true');
-      btn.addEventListener('click', ()=> { const now = localStorage.getItem(key)!=='true'; localStorage.setItem(key, now.toString()); setDark(now); });
+      const key = 'bsds_minimal_dark';
+      const saved = localStorage.getItem(key);
+      const dark = saved === null ? true : saved === 'true';
+      document.body.classList.toggle('light', !dark);
+      themeBtn.addEventListener('click', ()=>{
+        const nowDark = !(localStorage.getItem(key) === 'true');
+        localStorage.setItem(key, nowDark.toString());
+        document.body.classList.toggle('light', !nowDark);
+      });
     })();
 
-    // Init
-    loadRoot();
-    // Support hash navigation to open folder
-    window.addEventListener('hashchange', ()=> { const p = location.hash.replace(/^#/,''); if(p) openFolder(decodeURIComponent(p)); });
-    if(location.hash) { const p=location.hash.replace(/^#/,''); if(p) openFolder(decodeURIComponent(p)); }
+    // init
+    loadTop();
+    if(location.hash) {
+      const p = decodeURIComponent(location.hash.slice(1));
+      if(p) openFolder(p);
+    }
+    window.addEventListener('hashchange', ()=> {
+      const p = decodeURIComponent(location.hash.slice(1));
+      if(p) openFolder(p);
+    });
   </script>
 </body>
 </html>
