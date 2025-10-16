@@ -1,259 +1,86 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS_Materials — Online File Browser</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repo Navigator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{
-      --bg:#071130; /* deep navy */
-      --panel:#0b1b3a; /* slightly lighter */
-      --accent:#1e90ff; /* primary accent */
-      --muted:#9bb3e6;
-      --text:#eaf2ff; /* off-white */
-      --glass: rgba(255,255,255,0.03);
+    :root {
+      --background: 215 28% 14%;
+      --foreground: 211 41% 74%;
+      --card: 215 28% 17%;
+      --card-foreground: 211 41% 74%;
+      --primary: 174 45% 51%;
+      --primary-foreground: 215 28% 10%;
+      --accent: 215 28% 25%;
+      --accent-foreground: 211 41% 85%;
+      --border: 215 28% 25%;
     }
-    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial; background:linear-gradient(180deg,var(--bg),#08142a); color:var(--text);}
-    .wrap{max-width:1100px;margin:32px auto;padding:20px;}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    h1{font-size:20px;margin:0;color:var(--text)}
-    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
-
-    .cards{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
-    .card{background:linear-gradient(180deg,var(--panel),rgba(255,255,255,0.02));border-radius:12px;padding:14px;width:260px;box-shadow:0 6px 18px rgba(3,6,15,0.6);cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
-    .card h3{margin:0 0 6px;font-size:16px}
-    .card p{margin:0;font-size:13px;color:var(--muted)}
-
-    .viewer{margin-top:20px;background:var(--panel);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-    .toolbar{display:flex;align-items:center;gap:8px}
-    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:var(--text);cursor:pointer}
-    .search{margin-left:auto}
-    input[type=search]{background:transparent;border:1px dashed rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:var(--text)}
-
-    ul.tree{list-style:none;padding-left:8px;margin:10px 0}
-    li.node{padding:6px 8px;border-radius:8px;display:flex;align-items:center;gap:8px}
-    li.node.folder{background:linear-gradient(90deg,rgba(30,144,255,0.04),transparent)}
-    .chev{display:inline-block;width:18px;text-align:center;transform:rotate(0);transition:transform .18s}
-    .chev.open{transform:rotate(90deg)}
-    a.filelink{color:var(--muted);text-decoration:none;font-size:13px}
-    a.filelink:hover{text-decoration:underline;color:var(--text)}
-
-    footer{margin-top:18px;color:var(--muted);font-size:13px}
-
-    /* responsive */
-    @media (max-width:640px){.cards{justify-content:center}.card{width:100%}}
+    body {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-family: 'PT Sans', sans-serif;
+    }
+    .container {
+      max-width: 1400px;
+    }
+    .card {
+      background-color: hsl(var(--card));
+      color: hsl(var(--card-foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .card-header {
+      padding: 1.5rem;
+    }
+    .card-content {
+      padding: 1.5rem;
+      padding-top: 0;
+    }
+    .text-primary {
+      color: hsl(var(--primary));
+    }
+    .bg-accent {
+      background-color: hsl(var(--accent));
+    }
+    .text-accent-foreground {
+       color: hsl(var(--accent-foreground));
+    }
+    .text-muted-foreground {
+      color: hsl(211 41% 60%);
+    }
+    .hover\:underline:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>BSDS_Materials — File Browser</h1>
-        <p class="lead">Dark-blue themed browser-like file manager for the repo — click a folder to toggle its contents.</p>
-      </div>
-      <div class="toolbar">
-        <button id="refresh" class="btn">Refresh</button>
-        <div class="search"><input id="q" type="search" placeholder="filter files/folders (type to filter)" /></div>
-      </div>
+<body class="dark">
+  <main class="container mx-auto px-4 py-8 md:py-12">
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold text-primary md:text-5xl">Repo Navigator</h1>
+      <p class="text-muted-foreground mt-2">
+        Browsing the <a href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank" rel="noopener noreferrer" class="font-mono bg-accent px-1.5 py-1 rounded-md text-accent-foreground hover:underline">Cyclotron123/BSDS_Materials</a> repository.
+      </p>
     </header>
-
-    <section id="rootFolders" class="cards" aria-live="polite">
-      <!-- top-level folder cards inserted here -->
-    </section>
-
-    <section id="viewer" class="viewer" hidden>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <div>
-          <strong id="viewerTitle"></strong>
-          <div id="viewerPath" style="font-size:12px;color:var(--muted)"></div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button id="backBtn" class="btn">Back</button>
-          <a id="openOnGit" class="btn" target="_blank" rel="noopener">Open on GitHub</a>
-        </div>
+    <div class="card">
+      <div class="card-header">
+        <nav aria-label="Breadcrumb">
+          <ol class="flex items-center space-x-1 md:space-x-2 text-sm text-muted-foreground">
+            <li>
+              <span class="text-foreground font-medium">Home</span>
+            </li>
+          </ol>
+        </nav>
       </div>
-
-      <nav style="margin-top:12px">
-        <ul id="treeRoot" class="tree"></ul>
-      </nav>
-    </section>
-
-    <footer>
-      Rendered from <code style="color:var(--muted)">Cyclotron123/BSDS_Materials</code> — uses GitHub API to load structure from the <code>main</code> branch.
-    </footer>
-  </div>
-
-  <script>
-    const OWNER = 'Cyclotron123';
-    const REPO = 'BSDS_Materials';
-    const BRANCH = 'main';
-    const rootEl = document.getElementById('rootFolders');
-    const viewer = document.getElementById('viewer');
-    const treeRoot = document.getElementById('treeRoot');
-    const viewerTitle = document.getElementById('viewerTitle');
-    const viewerPath = document.getElementById('viewerPath');
-    const openOnGit = document.getElementById('openOnGit');
-    const qInput = document.getElementById('q');
-    const backBtn = document.getElementById('backBtn');
-    let tree = [];
-
-    async function fetchTree(){
-      rootEl.innerHTML = '<div style="color:var(--muted)">Loading repository structure…</div>';
-      try{
-        const resp = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`);
-        if(!resp.ok) throw new Error('GitHub API error: '+resp.status);
-        const data = await resp.json();
-        // data.tree is an array of {path, mode, type, sha, url}
-        tree = data.tree || [];
-        buildTopLevel();
-      }catch(err){
-        rootEl.innerHTML = '<div style="color:#f88">Failed to load repository: '+err.message+'</div>';
-        console.error(err);
-      }
-    }
-
-    function buildTopLevel(){
-      rootEl.innerHTML = '';
-      const top = new Map();
-      tree.forEach(item=>{
-        const parts = item.path.split('/');
-        if(parts.length>1){
-          const topName = parts[0];
-          if(!top.has(topName)) top.set(topName, []);
-          top.get(topName).push(item);
-        } else {
-          // top-level file — treat as special card
-          const name = parts[0];
-          top.set(name, top.get(name) || []).push(item);
-        }
-      });
-
-      // Show only primary folders (top-level directories). Files at repo root will be shown as cards too.
-      for(const [name, items] of top.entries()){
-        const isFolder = items.some(i => i.path.startsWith(name + '/'));
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.tabIndex = 0;
-        card.innerHTML = `<h3>${name}</h3><p>${isFolder ? 'Folder' : 'File'} — click to open</p>`;
-        card.addEventListener('click', ()=> openName(name));
-        card.addEventListener('keypress', (e)=>{ if(e.key==='Enter') openName(name); });
-        rootEl.appendChild(card);
-      }
-      if(top.size===0) rootEl.innerHTML = '<div style="color:var(--muted)">No files found in repository.</div>';
-    }
-
-    function openName(name){
-      // prepare subtree
-      const subtree = tree.filter(item => item.path === name || item.path.startsWith(name + '/'));
-      viewerTitle.textContent = name;
-      viewerPath.textContent = `${OWNER}/${REPO}@${BRANCH}/${name}`;
-      openOnGit.href = `https://github.com/${OWNER}/${REPO}/tree/${BRANCH}/${name}`;
-      renderTree(subtree, name);
-      viewer.hidden = false;
-      window.scrollTo({top:0,behavior:'smooth'});
-    }
-
-    backBtn.addEventListener('click', ()=>{ viewer.hidden = true; window.scrollTo({top:0,behavior:'smooth'}); });
-
-    function renderTree(subtree, rootName){
-      treeRoot.innerHTML = '';
-      // build a nested object tree for the subtree
-      const rootNode = {name: rootName, children: new Map()};
-      subtree.forEach(item => {
-        const rel = item.path.split('/');
-        // remove rootName prefix if present
-        if(rel[0] === rootName) rel.shift();
-        let cursor = rootNode;
-        rel.forEach((part, idx)=>{
-          if(!cursor.children.has(part)) cursor.children.set(part, {name:part, children:new Map(), fullPath: null, isFile:false});
-          const node = cursor.children.get(part);
-          if(idx === rel.length-1){
-            node.fullPath = (item.path);
-            node.isFile = item.type === 'blob';
-          }
-          cursor = node;
-        });
-      });
-
-      // recursive render
-      function renderNode(node, parentUl){
-        for(const [k,v] of node.children){
-          const li = document.createElement('li');
-          li.className = 'node ' + (v.isFile ? 'file' : 'folder');
-          const row = document.createElement('div');
-          row.style.display='flex';row.style.alignItems='center';row.style.justifyContent='space-between';
-
-          const left = document.createElement('div');
-          left.style.display='flex';left.style.alignItems='center';left.style.gap='8px';
-
-          const chev = document.createElement('span');
-          chev.className='chev';
-          chev.innerHTML = v.isFile ? '📄' : '▶';
-          left.appendChild(chev);
-
-          const title = document.createElement('span');
-          title.textContent = k;
-          left.appendChild(title);
-
-          row.appendChild(left);
-
-          if(v.isFile){
-            const link = document.createElement('a');
-            link.className='filelink';
-            link.textContent = 'Open file';
-            // raw file link
-            link.href = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${v.fullPath}`;
-            link.target = '_blank';
-            row.appendChild(link);
-          } else {
-            const btn = document.createElement('button');
-            btn.className='btn';
-            btn.textContent = 'Toggle';
-            btn.addEventListener('click', ()=>{
-              const subUl = li.querySelector(':scope > ul');
-              if(subUl){
-                const isHidden = subUl.hidden;
-                subUl.hidden = !isHidden;
-                chev.classList.toggle('open', !isHidden);
-                chev.innerHTML = !isHidden ? '▶' : '▼';
-              }
-            });
-            row.appendChild(btn);
-          }
-
-          li.appendChild(row);
-
-          // children
-          if(!v.isFile){
-            const subUl = document.createElement('ul');
-            subUl.className='tree';
-            subUl.hidden = true;
-            li.appendChild(subUl);
-            renderNode(v, subUl);
-          }
-
-          parentUl.appendChild(li);
-        }
-      }
-
-      renderNode(rootNode, treeRoot);
-    }
-
-    // filtering helper
-    qInput.addEventListener('input', ()=>{
-      const q = qInput.value.trim().toLowerCase();
-      if(!q) return buildTopLevel();
-      // show only cards that match q
-      Array.from(rootEl.children).forEach(card=>{
-        const name = card.querySelector('h3').textContent.toLowerCase();
-        card.style.display = name.includes(q) ? '' : 'none';
-      });
-    });
-
-    document.getElementById('refresh').addEventListener('click', fetchTree);
-
-    // initial load
-    fetchTree();
-  </script>
+      <div class="card-content">
+        <p class="text-muted-foreground">This directory is empty. (Note: Content is dynamically loaded in the Next.js app)</p>
+      </div>
+    </div>
+  </main>
 </body>
 </html>
