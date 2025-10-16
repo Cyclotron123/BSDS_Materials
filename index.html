@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS Materials — Dark Blue (Folder Names Black)</title>
+  <title>BSDS Materials — Theme Folder Color</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     /* Dark blue theme tokens */
@@ -14,14 +14,12 @@
       --accent: #38bdf8;
       --accent-2: #60a5fa;
       --accent-3: #7dd3fc;
-      --folder: linear-gradient(180deg,#0f2a3a,#0c2432);
-      --file: linear-gradient(180deg,#07293c,#043040);
       --radius: 14px;
       --shadow: 0 12px 30px rgba(2,6,23,0.6);
-      --glass: rgba(255,255,255,0.03);
       --border-weak: rgba(255,255,255,0.04);
     }
 
+    /* Light theme tokens */
     [data-theme="light"]{
       --bg: linear-gradient(180deg,#f7fbff 0%, #fff7ff 100%);
       --card:#ffffff;
@@ -29,11 +27,8 @@
       --accent:#0ea5a4;
       --accent-2:#7c3aed;
       --accent-3:#ff6b6b;
-      --folder:#fff4e6;
-      --file:#e8f9ff;
       --radius:14px;
       --shadow: 0 12px 30px rgba(20,30,60,0.08);
-      --glass: rgba(255,255,255,0.6);
       --border-weak: rgba(0,0,0,0.06);
       color: inherit;
     }
@@ -114,14 +109,14 @@
     .meta .name { font-weight:700; color:#e8f8ff; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .meta .path { font-size:12px; color:var(--muted); margin-top:4px; opacity:0.95; }
 
-    /* Make folder names black */
+    /* Folder names: WHITE in dark theme (default), BLACK in light theme */
+    /* Default (dark theme): white */
     .node[data-type="dir"] .meta .name {
-      color: #000000;
-      /* keep strong weight and prevent color inversion in light theme */
+      color: #ffffff !important;
     }
-    /* In light theme keep folder names dark as well */
+    /* When data-theme="light" apply black */
     [data-theme="light"] .node[data-type="dir"] .meta .name {
-      color: #000000;
+      color: #000000 !important;
     }
 
     .actions { display:flex; gap:8px; align-items:center; }
@@ -280,6 +275,8 @@
           const wrap = document.createElement('div'); wrap.style.marginBottom='8px';
           if(it.type === 'dir'){
             const row = folderNode(it);
+            // set data-type attribute so CSS can target folder names
+            row.dataset.type = 'dir';
             wrap.appendChild(row);
             const nested = document.createElement('div'); nested.className='nested';
             wrap.appendChild(nested);
@@ -302,6 +299,7 @@
             allRows.push(row);
           } else {
             const row = fileNode(it);
+            row.dataset.type = 'file';
             wrap.appendChild(row);
             allRows.push(row);
           }
