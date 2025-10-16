@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS Materials — Dark Blue (Click Row to Toggle)</title>
+  <title>BSDS Materials — Dark Blue (Folder Names Black)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     /* Dark blue theme tokens */
@@ -21,6 +21,7 @@
       --glass: rgba(255,255,255,0.03);
       --border-weak: rgba(255,255,255,0.04);
     }
+
     [data-theme="light"]{
       --bg: linear-gradient(180deg,#f7fbff 0%, #fff7ff 100%);
       --card:#ffffff;
@@ -113,6 +114,16 @@
     .meta .name { font-weight:700; color:#e8f8ff; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .meta .path { font-size:12px; color:var(--muted); margin-top:4px; opacity:0.95; }
 
+    /* Make folder names black */
+    .node[data-type="dir"] .meta .name {
+      color: #000000;
+      /* keep strong weight and prevent color inversion in light theme */
+    }
+    /* In light theme keep folder names dark as well */
+    [data-theme="light"] .node[data-type="dir"] .meta .name {
+      color: #000000;
+    }
+
     .actions { display:flex; gap:8px; align-items:center; }
     .open-link {
       color:#002034; background: linear-gradient(90deg,var(--accent-3),var(--accent));
@@ -147,7 +158,7 @@
         <div class="logo">BS</div>
         <div class="title">
           <h1>BSDS Materials</h1>
-          <div class="subtitle">Dark blue themed file browser — click any folder row to toggle</div>
+          <div class="subtitle">Dark blue themed file browser — folder names are black</div>
         </div>
       </div>
 
@@ -234,9 +245,7 @@
           <a class="open-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank" rel="noopener">Open</a>
         </div>
       `;
-      // clicking the row opens the file (but keep link clickable)
       row.addEventListener('click', (e) => {
-        // if the user clicked the Open link itself, do nothing here
         if (e.target.closest('a.open-link')) return;
         window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank');
       });
@@ -275,9 +284,8 @@
             const nested = document.createElement('div'); nested.className='nested';
             wrap.appendChild(nested);
 
-            // Toggle nested on row click
+            // Toggle nested on row click (clicking links inside won't toggle)
             row.addEventListener('click', async (ev) => {
-              // ensure clicking any actionable child (like link) doesn't toggle
               if (ev.target.closest('a')) return;
               if (nested.classList.contains('open')) {
                 nested.classList.remove('open');
@@ -287,12 +295,8 @@
               }
             });
 
-            // keyboard also supports Enter to toggle the row
             row.addEventListener('keydown', ev=>{
-              if(ev.key === 'Enter'){
-                ev.preventDefault();
-                row.click();
-              }
+              if(ev.key === 'Enter'){ ev.preventDefault(); row.click(); }
             });
 
             allRows.push(row);
