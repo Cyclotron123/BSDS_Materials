@@ -1,510 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSDS Materials - Complete Study Resource Hub</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --secondary: #0891b2;
-            --accent: #06b6d4;
-            --bg-light: #f8fafc;
-            --bg-card: #ffffff;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --border: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 60px 0;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            overflow: hidden;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="30" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="60" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="30" cy="80" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 15px;
-            letter-spacing: -0.5px;
-        }
-
-        .subtitle {
-            font-size: 1.25rem;
-            opacity: 0.95;
-            font-weight: 400;
-        }
-
-        .github-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 20px;
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .github-link:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .content-section {
-            padding: 60px 0;
-        }
-
-        .section-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 30px;
-            text-align: center;
-            position: relative;
-            padding-bottom: 15px;
-        }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-radius: 2px;
-        }
-
-        .programs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 40px;
-            margin-top: 40px;
-        }
-
-        .program-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 35px;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            border: 1px solid var(--border);
-        }
-
-        .program-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .program-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .program-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            font-weight: 700;
-        }
-
-        .program-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .semester-section {
-            margin-bottom: 30px;
-        }
-
-        .semester-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .semester-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .courses-list {
-            display: grid;
-            gap: 12px;
-        }
-
-        .course-item {
-            background: var(--bg-light);
-            padding: 16px 20px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-
-        .course-item:hover {
-            background: white;
-            border-color: var(--primary);
-            transform: translateX(5px);
-        }
-
-        .course-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .course-name::before {
-            content: '📚';
-            font-size: 1.2rem;
-        }
-
-        .course-link {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 6px;
-            background: white;
-            border: 2px solid var(--primary);
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
-        }
-
-        .course-link:hover {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .stats-section {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            margin: 40px 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            text-align: center;
-        }
-
-        .stat-item {
-            padding: 20px;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-            letter-spacing: 0.5px;
-        }
-
-        footer {
-            background: var(--text-primary);
-            color: white;
-            padding: 30px 0;
-            text-align: center;
-            margin-top: 60px;
-        }
-
-        footer p {
-            opacity: 0.9;
-            margin-bottom: 10px;
-        }
-
-        footer a {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-
-        footer a:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        .note-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            .programs-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-section {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .program-card {
-                padding: 25px;
-            }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.6s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BSDS Materials</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body { padding: 2rem; background: #f9f9f9; }
+    h1 { margin-bottom: 1rem; }
+    .folder { font-weight: bold; cursor: pointer; }
+    .nested { display: none; margin-left: 1rem; }
+    .active { display: block; }
+    .file-link { text-decoration: none; color: #007bff; }
+    .file-link:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="container header-content">
-            <h1>BSDS Materials</h1>
-            <p class="subtitle">Complete Study Resource Hub - All Notes and Documents in One Place</p>
-            <a href="https://github.com/Cyclotron123/BSDS_Materials" class="github-link" target="_blank" rel="noopener">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                </svg>
-                View on GitHub
-            </a>
-        </div>
-    </header>
+  <div class="container">
+    <h1>📚 BSDS Materials</h1>
+    <p>All notes and documents organized by folder. Click to expand folders and access files.</p>
+    <div id="file-tree"></div>
+  </div>
 
-    <div class="container">
-        <div class="stats-section fade-in">
-            <div class="stat-item">
-                <span class="stat-number">2</span>
-                <span class="stat-label">Programs</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">4</span>
-                <span class="stat-label">Semesters</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">16+</span>
-                <span class="stat-label">Courses</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">177</span>
-                <span class="stat-label">Updates</span>
-            </div>
-        </div>
+  <script>
+    const repo = "Cyclotron123/BSDS_Materials";
+    const branch = "main";
 
-        <section class="content-section">
-            <h2 class="section-title">Study Programs</h2>
-            
-            <div class="programs-grid">
-                <!-- BSDS 1 -->
-                <div class="program-card fade-in">
-                    <div class="program-header">
-                        <div class="program-icon">1</div>
-                        <div>
-                            <h3 class="program-title">BSDS Year 1</h3>
-                        </div>
-                    </div>
+    async function fetchRepoTree(path = "") {
+      const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+      const res = await fetch(apiUrl);
+      return res.json();
+    }
 
-                    <div class="semester-section">
-                        <h4 class="semester-title">Semester 1</h4>
-                        <div class="courses-list">
-                            <div class="course-item">
-                                <span class="course-name">Economics<span class="note-badge">Notes</span></span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_1/ECO/NOTES" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Introduction to Computers<span class="note-badge">Notes</span></span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_1/ITC/NOTES" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Mathematics I<span class="note-badge">Notes</span></span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_1/MATH-I/NOTES" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Probability 1</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_1/PROBABILITY_1" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Statistics I</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_1/STAT-I" class="course-link" target="_blank">View</a>
-                            </div>
-                        </div>
-                    </div>
+    async function buildTree(container, path = "") {
+      const items = await fetchRepoTree(path);
+      items.sort((a, b) => a.type.localeCompare(b.type)); // folders first
 
-                    <div class="semester-section">
-                        <h4 class="semester-title">Semester 2</h4>
-                        <div class="courses-list">
-                            <div class="course-item">
-                                <span class="course-name">Data Analysis using R & Python<span class="note-badge">Notes</span></span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_2/DARP/NOTES" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Economics 2</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_2/ECO2" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Mathematics II</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_2/MATH-II" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Optimization</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_2/OPT" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Physics<span class="note-badge">Notes</span></span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_2/PHYSICS/NOTES" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Statistical Inference</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_1/SEM_2/STATISTICAL%20INFERENCE" class="course-link" target="_blank">View</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      for (const item of items) {
+        const div = document.createElement("div");
 
-                <!-- BSDS 2 -->
-                <div class="program-card fade-in">
-                    <div class="program-header">
-                        <div class="program-icon">2</div>
-                        <div>
-                            <h3 class="program-title">BSDS Year 2</h3>
-                        </div>
-                    </div>
+        if (item.type === "dir") {
+          div.innerHTML = `<div class="folder">📁 ${item.name}</div>`;
+          const nested = document.createElement("div");
+          nested.classList.add("nested");
+          div.appendChild(nested);
 
-                    <div class="semester-section">
-                        <h4 class="semester-title">Semester 1</h4>
-                        <div class="courses-list">
-                            <div class="course-item">
-                                <span class="course-name">Data Structures & Algorithms</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_2/SEM_1/DSA" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Multivariate Data Reduction</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_2/SEM_1/MDR" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Mathematics III</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_2/SEM_1/Maths-III" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Probability 2</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_2/SEM_1/PROBABILITY_2" class="course-link" target="_blank">View</a>
-                            </div>
-                            <div class="course-item">
-                                <span class="course-name">Statistical Inference</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_2/SEM_1/Statistical%20Inference" class="course-link" target="_blank">View</a>
-                            </div>
-                        </div>
-                    </div>
+          div.querySelector(".folder").addEventListener("click", () => {
+            nested.classList.toggle("active");
+            if (!nested.hasChildNodes()) {
+              buildTree(nested, item.path);
+            }
+          });
+        } else {
+          const fileUrl = `https://github.com/${repo}/blob/${branch}/${item.path}`;
+          div.innerHTML = `<div>📄 <a class="file-link" href="${fileUrl}" target="_blank">${item.name}</a></div>`;
+        }
 
-                    <div class="semester-section">
-                        <h4 class="semester-title">Semester 2</h4>
-                        <div class="courses-list">
-                            <div class="course-item">
-                                <span class="course-name">All Semester 2 Materials</span>
-                                <a href="https://github.com/Cyclotron123/BSDS_Materials/tree/main/BSDS_2/SEM_2" class="course-link" target="_blank">View</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
+        container.appendChild(div);
+      }
+    }
 
-    <footer>
-        <div class="container">
-            <p>BSDS Materials - A Comprehensive Study Resource Hub</p>
-            <p>Maintained by <a href="https://github.com/Cyclotron123" target="_blank" rel="noopener">Cyclotron123</a></p>
-            <p style="margin-top: 15px; opacity: 0.7; font-size: 0.9rem;">Last updated: 2025</p>
-        </div>
-    </footer>
+    buildTree(document.getElementById("file-tree"));
+  </script>
 </body>
 </html>
