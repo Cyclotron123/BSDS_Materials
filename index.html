@@ -1,110 +1,457 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BSDS Materials Browser</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BSDS_Materials — Repository browser</title>
   <style>
-    body {
-      background-color: #0f172a;
-      color: #f1f5f9;
-      font-family: sans-serif;
-      padding: 20px;
+    :root{
+      --bg:#0b0b0d;
+      --panel:#0f1113;
+      --muted:#9aa0a6;
+      --accent:#58a6ff;
+      --file:#d1d5db;
+      --folder:#93c5fd;
+      --radius:8px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
     }
 
-    h2 {
-      margin-bottom: 20px;
+    /* Light theme base */
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: #f6f8fa;
+      color:#111827;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:32px;
+      box-sizing:border-box;
     }
 
-    .node {
-      background-color: #1e293b;
-      padding: 10px;
-      margin-bottom: 6px;
-      border-radius: 6px;
-      cursor: pointer;
+    .container{
+      width:100%;
+      max-width:980px;
+      background: white;
+      border-radius:var(--radius);
+      box-shadow: 0 6px 30px rgba(2,6,23,0.12);
+      overflow:hidden;
+      border:1px solid #e6edf3;
     }
 
-    .nested {
-      margin-left: 20px;
-      display: none;
+    header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:18px 20px;
+      border-bottom:1px solid #eef2f6;
+      background:linear-gradient(90deg,#ffffff,#fbfdff);
+    }
+    header h1{margin:0;font-size:16px}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    main{display:flex; gap:0; min-height:520px}
+
+    /* sidebar listing */
+    .tree {
+      width:340px;
+      border-right:1px solid #eef2f6;
+      padding:18px;
+      box-sizing:border-box;
+      background:linear-gradient(180deg,#ffffff,#fbfdff);
+    }
+    .viewer{
+      flex:1;
+      padding:20px;
+      box-sizing:border-box;
+      background:linear-gradient(180deg,#ffffff,#fbfdff);
     }
 
-    .nested.open {
-      display: block;
+    .controls{
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+      align-items:center;
+    }
+    .controls button{
+      background:transparent;
+      border:1px solid #e6edf3;
+      padding:8px 10px;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:13px;
     }
 
-    a {
-      color: #38bdf8;
-      text-decoration: none;
+    ul.nodes{list-style:none;padding:0;margin:0}
+    li.node{
+      padding:6px 8px;
+      border-radius:8px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-bottom:6px;
+      cursor:default;
+      font-size:14px;
+    }
+    li.node:hover{background:#f2f6fb}
+
+    .toggle{
+      width:20px;height:20px;border-radius:4px;display:inline-grid;place-items:center;
+      font-size:12px;border:1px solid #e6edf3;background:white;color:#334155;cursor:pointer;
     }
 
-    a:hover {
-      text-decoration: underline;
+    .meta{font-size:12px;color:var(--muted);margin-left:auto}
+
+    a.filelink{color:inherit;text-decoration:none;display:flex;gap:8px;align-items:center;width:100%}
+    .icon{width:18px;text-align:center;font-weight:600}
+
+    /* viewer */
+    .viewer h2{margin-top:0;margin-bottom:8px}
+    .breadcrumbs{font-size:13px;color:var(--muted);margin-bottom:14px}
+    .content-panel{
+      background:linear-gradient(180deg,#fff,#fdfeff);
+      padding:14px;border-radius:10px;border:1px solid #eef2f6;min-height:300px;
+      color:#0f1724;
+      overflow:auto;
+      font-family:var(--mono);
+      font-size:13px;
+    }
+
+    /* small note */
+    .note{font-size:13px;color:var(--muted);margin-top:10px}
+
+    /* Dark theme only rules: white text, dark backgrounds, and first-page behavior */
+    @media (prefers-color-scheme: dark) {
+      body{
+        background:var(--bg); color:#fff;
+      }
+      .container{background:var(--panel); border:1px solid rgba(255,255,255,0.04); box-shadow:none;}
+      header{background:transparent;border-bottom:1px solid rgba(255,255,255,0.04)}
+      header p{color:var(--muted)}
+      .tree{background:transparent;border-right:1px solid rgba(255,255,255,0.03);padding:20px}
+      .viewer{background:transparent;padding:20px}
+      .controls button{border:1px solid rgba(255,255,255,0.05);color:#e6eef7;background:transparent}
+      li.node{color:#fff}
+      li.node:hover{background:rgba(255,255,255,0.02)}
+      .toggle{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff}
+      .meta{color:rgba(255,255,255,0.45)}
+      .content-panel{background:#071018;border:1px solid rgba(255,255,255,0.04); color:#fff}
+      .breadcrumbs{color:rgba(255,255,255,0.45)}
+      .note{color:rgba(255,255,255,0.55)}
+    }
+
+    /* small responsive tweaks */
+    @media (max-width:880px){
+      .tree{width:100%;border-right:none;border-bottom:1px solid #eef2f6}
+      main{flex-direction:column}
     }
   </style>
 </head>
 <body>
-  <h2>📁 BSDS Materials</h2>
-  <div id="file-tree"></div>
+  <div class="container" id="app">
+    <header>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <rect x="3" y="3" width="18" height="18" rx="4" fill="#0ea5e9"></rect>
+        <path d="M7 8h10M7 12h10M7 16h6" stroke="#042c3f" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1>BSDS_Materials</h1>
+        <p>Repository browser — toggle folders to explore subfolders and files</p>
+      </div>
+    </header>
+
+    <main>
+      <aside class="tree" id="sidebar">
+        <div class="controls">
+          <button id="collapseAll" title="Collapse all">Collapse all</button>
+          <button id="expandAll" title="Expand all">Expand all</button>
+          <button id="toggleHidden" title="Show/hide dotfiles">Toggle dotfiles</button>
+        </div>
+
+        <div id="listing">
+          <p class="note">Loading repository listing…</p>
+        </div>
+      </aside>
+
+      <section class="viewer">
+        <div class="breadcrumbs" id="breadcrumbs">/</div>
+        <h2 id="viewerTitle">Select a file or folder</h2>
+        <div class="content-panel" id="viewerContent">
+          <div class="note">File preview will appear here when you click a file.</div>
+        </div>
+        <div class="note">This viewer uses the GitHub contents API to read directory structure from <strong>Cyclotron123/BSDS_Materials</strong>.</div>
+      </section>
+    </main>
+  </div>
 
   <script>
-    const repo = "Cyclotron123/BSDS_Materials";
-    const branch = "main";
-    const apiBase = `https://api.github.com/repos/${repo}/contents`;
-    const treeRoot = document.getElementById("file-tree");
+    // Configuration: repository owner and name
+    const OWNER = 'Cyclotron123';
+    const REPO = 'BSDS_Materials';
+    const API_ROOT = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
 
-    async function fetchTree(path = "") {
-      const res = await fetch(`${apiBase}/${path}?ref=${branch}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      return await res.json();
+    // UI elements
+    const listingEl = document.getElementById('listing');
+    const viewerContent = document.getElementById('viewerContent');
+    const viewerTitle = document.getElementById('viewerTitle');
+    const breadcrumbs = document.getElementById('breadcrumbs');
+    const collapseAllBtn = document.getElementById('collapseAll');
+    const expandAllBtn = document.getElementById('expandAll');
+    const toggleHiddenBtn = document.getElementById('toggleHidden');
+
+    let showDotfiles = false;
+    let expandedNodes = new Set();
+
+    // Utility: fetch directory contents from GitHub
+    async function fetchContents(path = '') {
+      const url = path ? `${API_ROOT}/${encodeURIComponent(path)}` : API_ROOT;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Failed to fetch repo contents: ' + resp.status);
+      return resp.json(); // array for directories, object for file
     }
 
-    function createNode(item) {
-      const node = document.createElement("div");
-      node.className = "node";
-      node.textContent = `${item.type === "dir" ? "📁" : "📄"} ${item.name}`;
+    // Render a directory node list
+    function renderNodes(items, parentPath = '') {
+      // Sort folders first then files
+      items.sort((a,b)=>{
+        if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+        return a.name.localeCompare(b.name, undefined, {sensitivity:'base'});
+      });
 
-      if (item.type === "file") {
-        const link = document.createElement("a");
-        link.href = `https://github.com/${repo}/blob/${branch}/${item.path}`;
-        link.target = "_blank";
-        link.textContent = `📄 ${item.name}`;
-        node.innerHTML = "";
-        node.appendChild(link);
-      }
+      const ul = document.createElement('ul');
+      ul.className = 'nodes';
 
-      return node;
-    }
+      items.forEach(item => {
+        // Apply dotfile toggle
+        if (!showDotfiles && item.name.startsWith('.')) return;
 
-    async function buildTree(container, path = "", depth = 0) {
-      const items = await fetchTree(path);
-      for (const item of items) {
-        if (depth === 0 && ["README.md", "index.html"].includes(item.name)) continue;
+        const li = document.createElement('li');
+        li.className = 'node';
+        const icon = document.createElement('span');
+        icon.className = 'icon';
 
-        const node = createNode(item);
-        container.appendChild(node);
+        if (item.type === 'dir') icon.textContent = '📁'; else icon.textContent = '📄';
 
-        if (item.type === "dir") {
-          const nested = document.createElement("div");
-          nested.className = "nested";
-          container.appendChild(nested);
+        const label = document.createElement(item.type === 'dir' ? 'button' : 'a');
+        label.className = item.type === 'dir' ? 'folder-btn' : 'filelink';
+        label.style.background='transparent';
+        label.style.border='none';
+        label.style.padding='0';
+        label.style.textAlign='left';
+        label.style.cursor = 'pointer';
 
-          node.addEventListener("click", async () => {
-            if (nested.classList.contains("open")) {
-              nested.classList.remove("open");
-              nested.innerHTML = "";
+        // file link: open raw GitHub url in viewer
+        if (item.type === 'file') {
+          const fileLink = document.createElement('a');
+          fileLink.href = item.html_url;
+          fileLink.target = '_blank';
+          fileLink.rel = 'noopener';
+          fileLink.className = 'filelink';
+          fileLink.innerHTML = `<span class="icon">📄</span><span>${item.name}</span><span class="meta">${item.size} bytes</span>`;
+          li.appendChild(fileLink);
+        } else {
+          // directory toggle
+          const btn = document.createElement('div');
+          const toggleBtn = document.createElement('span');
+          toggleBtn.className = 'toggle';
+          toggleBtn.textContent = expandedNodes.has(item.path) ? '−' : '+';
+          btn.appendChild(toggleBtn);
+
+          const title = document.createElement('span');
+          title.textContent = item.name;
+          title.style.marginLeft = '8px';
+
+          const meta = document.createElement('span');
+          meta.className = 'meta';
+          meta.textContent = 'dir';
+          li.append(toggleBtn, title, meta);
+
+          // container for children
+          const childContainer = document.createElement('div');
+          childContainer.style.marginLeft = '22px';
+          childContainer.style.display = expandedNodes.has(item.path) ? 'block' : 'none';
+          childContainer.dataset.path = item.path;
+
+          // toggle behavior
+          toggleBtn.addEventListener('click', async (e)=>{
+            e.stopPropagation();
+            if (expandedNodes.has(item.path)) {
+              expandedNodes.delete(item.path);
+              toggleBtn.textContent = '+';
+              childContainer.style.display = 'none';
             } else {
-              nested.classList.add("open");
-              if (!nested.hasChildNodes()) {
-                await buildTree(nested, item.path, depth + 1);
+              expandedNodes.add(item.path);
+              toggleBtn.textContent = '−';
+              childContainer.style.display = 'block';
+              // lazy-load children if empty
+              if (!childContainer.dataset.loaded) {
+                childContainer.innerHTML = '<div class="note">Loading…</div>';
+                try {
+                  const children = await fetchContents(item.path);
+                  const rendered = renderNodes(children, item.path);
+                  childContainer.innerHTML = '';
+                  childContainer.appendChild(rendered);
+                  childContainer.dataset.loaded = 'true';
+                } catch(err){
+                  childContainer.innerHTML = `<div class="note">Unable to load: ${err.message}</div>`;
+                }
               }
             }
           });
         }
+
+        // Append for files and directories
+        if (item.type === 'file') {
+          li.appendChild(document.createElement('span')); // spacer
+          li.appendChild(li.querySelector('.filelink'));
+        } else {
+          // for directories, append child container placeholder
+          const childContainer = document.createElement('div');
+          childContainer.style.marginLeft = '22px';
+          childContainer.style.display = expandedNodes.has(item.path) ? 'block' : 'none';
+          childContainer.dataset.path = item.path;
+          if (expandedNodes.has(item.path)) {
+            // load immediately if expanded
+            (async ()=>{
+              try {
+                const children = await fetchContents(item.path);
+                childContainer.innerHTML = '';
+                childContainer.appendChild(renderNodes(children, item.path));
+                childContainer.dataset.loaded = 'true';
+              } catch(err){
+                childContainer.innerHTML = `<div class="note">Unable to load: ${err.message}</div>`;
+              }
+            })();
+          }
+          li.appendChild(childContainer);
+        }
+
+        ul.appendChild(li);
+      });
+
+      return ul;
+    }
+
+    // Top-level listing builder with special "dark-mode" first-page behavior:
+    // - In dark mode (prefers-color-scheme: dark) the root listing will show only directories and hide index.html and README.md
+    // - In light mode root shows everything (subject to dotfile toggle)
+    async function buildRootListing() {
+      listingEl.innerHTML = '<p class="note">Loading repository listing…</p>';
+      try {
+        const items = await fetchContents('');
+        // Check prefers-color-scheme
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        // Filter out README and index.html only on first page when dark mode
+        let filtered = items.slice();
+
+        if (prefersDark) {
+          filtered = filtered.filter(it => it.type === 'dir');
+          // ensure index.html and README are not shown (even if they are directories with those names)
+          filtered = filtered.filter(it => !['index.html','README.md','README','readme.md'].includes(it.name));
+        } else {
+          // In light mode hide index.html and README.md as well? The user asked to hide on first page only in dark mode.
+          // We'll show them in light mode per instruction ambiguity -> so do not filter them out.
+        }
+
+        // Additionally always hide index.html and README.md from the root listing regardless of case when user asked "hide index.html and readme files from the first page"
+        // Only apply that extra hide when dark mode is active (we already did).
+        // Now render
+        const tree = renderNodes(filtered, '');
+        listingEl.innerHTML = '';
+        listingEl.appendChild(tree);
+
+        // Add note if dark-mode first-page restriction is active
+        if (prefersDark) {
+          const note = document.createElement('div');
+          note.className = 'note';
+          note.textContent = 'Dark mode: showing parent folders only on this first page; index and README hidden here.';
+          listingEl.appendChild(note);
+        }
+      } catch(err){
+        listingEl.innerHTML = `<div class="note">Error loading repository: ${err.message}</div>`;
       }
     }
 
-    buildTree(treeRoot);
+    // Expand/collapse helpers
+    function collapseAll() {
+      expandedNodes.clear();
+      // rebuild listing to collapse children
+      buildRootListing();
+    }
+    function expandAll() {
+      // naive strategy: expand first level only (to avoid huge loads). For deeper expansion, users can expand manually.
+      // Expand every directory visible at root
+      (async ()=>{
+        try{
+          const items = await fetchContents('');
+          items.forEach(it => { if (it.type==='dir') expandedNodes.add(it.path); });
+          buildRootListing();
+        }catch(e){ console.warn(e); }
+      })();
+    }
+
+    // Toggle dotfiles
+    function toggleDotfiles(){
+      showDotfiles = !showDotfiles;
+      buildRootListing();
+    }
+
+    // Wire UI buttons
+    collapseAllBtn.addEventListener('click', collapseAll);
+    expandAllBtn.addEventListener('click', expandAll);
+    toggleHiddenBtn.addEventListener('click', toggleDotfiles);
+
+    // Breadcrumb + file preview behavior: open file raw in iframe-like area for small text files
+    // Since the listing contains anchor links to GitHub file pages, we enhance by listening for clicks on file rows to preview
+    listingEl.addEventListener('click', async (e)=>{
+      const a = e.target.closest('a.filelink');
+      if (!a) return;
+      e.preventDefault();
+      const href = a.href;
+      viewerTitle.textContent = a.textContent.trim();
+      breadcrumbs.textContent = href.replace('https://github.com/','/'); // quick breadcrumb
+      viewerContent.innerHTML = '<div class="note">Loading file preview…</div>';
+
+      // Use GitHub raw URL by transforming html_url to raw.githubusercontent.com URL
+      // html_url format: https://github.com/OWNER/REPO/blob/branch/path
+      try {
+        const raw = href.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/','/');
+        const resp = await fetch(raw);
+        if (!resp.ok) {
+          viewerContent.innerHTML = `<div class="note">Preview not available. Opening on GitHub in a new tab.</div>`;
+          window.open(href, '_blank');
+          return;
+        }
+
+        const contentType = resp.headers.get('content-type') || '';
+        if (contentType.startsWith('text') || contentType.includes('json') || contentType.includes('javascript') || contentType.includes('markdown')) {
+          const txt = await resp.text();
+          // simple syntax safe display
+          viewerContent.innerHTML = `<pre style="white-space:pre-wrap;word-break:break-word;margin:0">${escapeHtml(txt)}</pre>`;
+        } else {
+          viewerContent.innerHTML = `<div class="note">Binary or non-text file. Opening on GitHub in a new tab.</div>`;
+          window.open(href, '_blank');
+        }
+      } catch(err){
+        viewerContent.innerHTML = `<div class="note">Could not fetch preview: ${err.message}</div>`;
+      }
+    });
+
+    // Escape HTML for safe display
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+
+    // Initialize
+    buildRootListing();
+
+    // Rebuild root listing on color scheme change (so dark-mode first-page behavior updates live)
+    if (window.matchMedia) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener && mq.addEventListener('change', ()=> buildRootListing());
+    }
   </script>
 </body>
 </html>
