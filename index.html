@@ -1,216 +1,166 @@
-<script>
-  const repo = "Cyclotron123/BSDS_Materials";
-  const branch = "main";
-  const apiBase = `https://api.github.com/repos/${repo}/contents`;
-  const treeRoot = document.getElementById('file-tree');
-  const searchInput = document.getElementById('search');
-  const emptyEl = document.getElementById('empty');
-  const errorEl = document.getElementById('error');
-  const breadcrumbs = document.getElementById('breadcrumbs');
-  const themeBtn = document.getElementById('themeToggle');
-
-  let cache = {};
-  let allRows = [];
-  let focused = null;
-  let currentPath = "";
-
-  // Load theme from localStorage
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
-    themeBtn.textContent = 'Switch to Dark Theme';
-  }
-
-  themeBtn.addEventListener('click', () => {
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    if (isLight) {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'dark');
-      themeBtn.textContent = 'Switch to Light Theme';
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-      localStorage.setItem('theme', 'light');
-      themeBtn.textContent = 'Switch to Dark Theme';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BSDS Materials Browser</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --text: #e6eef7;
+      --card: #1c2a3a;
+      --accent: #38bdf8;
     }
-  });
 
-  function setBreadcrumb(path) {
-    breadcrumbs.innerHTML = '';
-    const pieces = path ? path.split('/') : [];
-    const home = document.createElement('div');
-    home.style.cursor = 'pointer';
-    home.textContent = 'Home';
-    home.onclick = () => navigateTo('');
-    breadcrumbs.appendChild(home);
-    let built = '';
-    pieces.forEach(p => {
-      built = built ? built + '/' + p : p;
-      const sep = document.createElement('div');
-      sep.textContent = '›';
-      sep.style.opacity = '0.7';
-      sep.style.margin = '0 6px';
-      breadcrumbs.appendChild(sep);
-      const el = document.createElement('div');
-      el.style.cursor = 'pointer';
-      el.textContent = p;
-      el.onclick = () => navigateTo(built);
-      breadcrumbs.appendChild(el);
-    });
-  }
+    [data-theme="light"] {
+      --bg: #f9f9ff;
+      --text: #1e293b;
+      --card: #ffffff;
+      --accent: #0ea5a4;
+    }
 
-  async function fetchTree(path = '') {
-    const key = path || '/';
-    if (cache[key]) return cache[key];
-    try {
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, sans-serif;
+      padding: 20px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .search {
+      max-width: 300px;
+    }
+
+    .node {
+      background: var(--card);
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s ease;
+    }
+
+    .node:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .nested {
+      margin-left: 20px;
+    }
+
+    .btn-toggle {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>📁 BSDS Materials</h2>
+    <div>
+      <input id="search" class="form-control search" placeholder="Search files..." />
+      <button id="themeToggle" class="btn-toggle mt-2">Toggle Theme</button>
+    </div>
+  </div>
+
+  <div id="file-tree"></div>
+
+  <script>
+    const repo = "Cyclotron123/BSDS_Materials";
+    const branch = "main";
+    const apiBase = `https://api.github.com/repos/${repo}/contents`;
+    const treeRoot = document.getElementById("file-tree");
+    const searchInput = document.getElementById("search");
+    const themeBtn = document.getElementById("themeToggle");
+
+    let allNodes = [];
+
+    async function fetchTree(path = "") {
       const res = await fetch(`${apiBase}/${path}?ref=${branch}`);
-      if (!res.ok) throw new Error('fetch failed');
-      const data = await res.json();
-      cache[key] = data;
-      return data;
-    } catch (err) {
-      throw err;
+      if (!res.ok) throw new Error("Failed to fetch");
+      return await res.json();
     }
-  }
 
-  function clear() {
-    treeRoot.innerHTML = '';
-    allRows = [];
-    focused = null;
-  }
+    function createNode(item) {
+      const div = document.createElement("div");
+      div.className = "node";
+      div.dataset.name = item.name.toLowerCase();
+      div.innerHTML = `
+        <div>
+          <strong>${item.type === "dir" ? "📁" : "📄"} ${item.name}</strong>
+        </div>
+        <div>
+          ${item.type === "file" ? `<a href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a>` : ""}
+        </div>
+      `;
+      return div;
+    }
 
-  function fileNode(item) {
-    const row = document.createElement('div');
-    row.className = 'node';
-    row.tabIndex = 0;
-    row.dataset.path = item.path;
-    row.dataset.type = item.type;
-    row.innerHTML = `
-      <div class="icon file">📄</div>
-      <div class="meta">
-        <div class="name">${item.name}</div>
-        <div class="path">${item.path}</div>
-      </div>
-      <div class="actions">
-        <a class="open-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a>
-      </div>
-    `;
-    row.addEventListener('keydown', e => {
-      if (e.key === 'Enter') window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank');
-    });
-    return row;
-  }
-
-  function folderNode(item) {
-    const row = document.createElement('div');
-    row.className = 'node';
-    row.tabIndex = 0;
-    row.dataset.path = item.path;
-    row.dataset.type = item.type;
-    row.innerHTML = `
-      <div class="icon folder">📁</div>
-      <div class="meta">
-        <div class="name">${item.name}</div>
-        <div class="path">${item.path}</div>
-      </div>
-      <div class="actions">
-        <span class="btn-ghost">Auto Expanded</span>
-      </div>
-    `;
-    return row;
-  }
-
-  async function build(container, path = '') {
-    try {
-      const items = await fetchTree(path);
-      if (!Array.isArray(items)) throw new Error('unexpected');
-      items.sort((a, b) => a.type === b.type ? a.name.localeCompare(b.name) : (a.type === 'dir' ? -1 : 1));
-      if (items.length === 0) {
-        container.innerHTML = '<div class="empty">Folder is empty</div>';
-        return;
-      }
-
-      for (const it of items) {
-        const wrap = document.createElement('div');
-        wrap.style.marginBottom = '8px';
-        if (it.type === 'dir') {
-          const row = folderNode(it);
-          wrap.appendChild(row);
-          const nested = document.createElement('div');
-          nested.className = 'nested open';
-          wrap.appendChild(nested);
-          await build(nested, it.path);
-          allRows.push(row);
-        } else {
-          const row = fileNode(it);
-          wrap.appendChild(row);
-          allRows.push(row);
+    async function buildTree(container, path = "") {
+      try {
+        const items = await fetchTree(path);
+        for (const item of items) {
+          const node = createNode(item);
+          container.appendChild(node);
+          allNodes.push(node);
+          if (item.type === "dir") {
+            const nested = document.createElement("div");
+            nested.className = "nested";
+            container.appendChild(nested);
+            await buildTree(nested, item.path);
+          }
         }
-        container.appendChild(wrap);
+      } catch (err) {
+        container.innerHTML = `<div style="color:red">Error loading: ${err.message}</div>`;
       }
-    } catch (err) {
-      errorEl.style.display = 'block';
     }
-  }
 
-  async function navigateTo(path = '') {
-    currentPath = path || '';
-    setBreadcrumb(currentPath);
-    clear();
-    emptyEl.style.display = 'none';
-    errorEl.style.display = 'none';
-    await build(treeRoot, currentPath);
-    filter();
-  }
+    function filterTree() {
+      const query = searchInput.value.toLowerCase();
+      allNodes.forEach(node => {
+        const name = node.dataset.name;
+        node.style.display = name.includes(query) ? "" : "none";
+      });
+    }
 
-  function filter() {
-    const q = (searchInput.value || '').toLowerCase().trim();
-    let visible = 0;
-    allRows.forEach(r => {
-      const txt = r.querySelector('.name')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
-      if (!q || txt.includes(q)) {
-        r.style.display = '';
-        visible++;
+    searchInput.addEventListener("input", filterTree);
+
+    themeBtn.addEventListener("click", () => {
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      if (isLight) {
+        document.documentElement.removeAttribute("data-theme");
+        themeBtn.textContent = "Toggle Theme";
       } else {
-        r.style.display = 'none';
+        document.documentElement.setAttribute("data-theme", "light");
+        themeBtn.textContent = "Toggle Theme";
       }
     });
-    emptyEl.style.display = visible === 0 ? '' : 'none';
-  }
 
-  document.addEventListener('keydown', e => {
-    if (e.key === '/') {
-      e.preventDefault();
-      searchInput.focus();
-      return;
-    }
-    if (document.activeElement === searchInput) return;
-    const visible = allRows.filter(r => r.style.display !== 'none');
-    if (visible.length === 0) return;
-    let idx = visible.indexOf(focused);
-    if (e.key === 'ArrowDown') {
-      idx = idx < visible.length - 1 ? idx + 1 : 0;
-      focusRow(visible[idx]);
-      e.preventDefault();
-    }
-    if (e.key === 'ArrowUp') {
-      idx = idx > 0 ? idx - 1 : visible.length - 1;
-      focusRow(visible[idx]);
-      e.preventDefault();
-    }
-  });
-
-  function focusRow(el) {
-    if (!el) return;
-    focused = el;
-    el.focus();
-  }
-
-  let debounce = null;
-  searchInput.addEventListener('input', () => {
-    clearTimeout(debounce);
-    debounce = setTimeout(filter, 160);
-  });
-
-  // Initial load
-  navigateTo('');
-</script>
+    buildTree(treeRoot);
+  </script>
+</body>
+</html>
