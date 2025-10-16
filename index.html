@@ -1,457 +1,358 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS_Materials — Repository browser</title>
+  <title>BSDS Materials — Vibrant</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     :root{
-      --bg:#0b0b0d;
-      --panel:#0f1113;
-      --muted:#9aa0a6;
-      --accent:#58a6ff;
-      --file:#d1d5db;
-      --folder:#93c5fd;
-      --radius:8px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+      --bg: linear-gradient(180deg,#fff7ed 0%, #fff1f2 100%);
+      --card:#ffffff;
+      --muted:#475569;
+      --accent:#ea580c;
+      --accent-2:#8b5cf6;
+      --folder:#ffedd5;
+      --file:#e0f2fe;
+      --radius:16px;
+      --shadow: 0 10px 30px rgba(14,28,80,0.08);
+      --glass: rgba(255,255,255,0.6);
+    }
+    [data-theme="dark"]{
+      --bg: linear-gradient(180deg,#081028 0%, #07122a 100%);
+      --card:linear-gradient(180deg,#08182a, #061322);
+      --muted:#9fb4d6;
+      --accent:#ff7a18;
+      --accent-2:#a78bfa;
+      --folder:#3b2b0d;
+      --file:#0b2233;
+      --shadow: none;
+      color: #e6eef7;
     }
 
-    /* Light theme base */
     html,body{height:100%}
     body{
-      margin:0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: #f6f8fa;
-      color:#111827;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      padding:32px;
-      box-sizing:border-box;
+      background: var(--bg);
+      padding:2.25rem;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      transition: background .25s ease, color .25s ease;
     }
 
-    .container{
-      width:100%;
-      max-width:980px;
-      background: white;
+    .app { max-width:1100px; margin:0 auto; }
+
+    .header { display:flex; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+    .title { display:flex; gap:.75rem; align-items:center; }
+    .logo {
+      width:64px; height:64px; border-radius:14px; display:grid; place-items:center; font-weight:800;
+      color:#fff; background: linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:var(--shadow);
+    }
+
+    .controls { display:flex; gap:.5rem; align-items:center; }
+    .search { min-width:260px; }
+
+    .panel {
+      background: var(--card);
       border-radius:var(--radius);
-      box-shadow: 0 6px 30px rgba(2,6,23,0.12);
+      box-shadow:var(--shadow);
+      padding:1.1rem;
       overflow:hidden;
-      border:1px solid #e6edf3;
+      border: 1px solid rgba(255,255,255,0.6);
+      backdrop-filter: blur(6px);
     }
 
-    header{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:18px 20px;
-      border-bottom:1px solid #eef2f6;
-      background:linear-gradient(90deg,#ffffff,#fbfdff);
-    }
-    header h1{margin:0;font-size:16px}
-    header p{margin:0;color:var(--muted);font-size:13px}
-
-    main{display:flex; gap:0; min-height:520px}
-
-    /* sidebar listing */
-    .tree {
-      width:340px;
-      border-right:1px solid #eef2f6;
-      padding:18px;
-      box-sizing:border-box;
-      background:linear-gradient(180deg,#ffffff,#fbfdff);
-    }
-    .viewer{
-      flex:1;
-      padding:20px;
-      box-sizing:border-box;
-      background:linear-gradient(180deg,#ffffff,#fbfdff);
+    .tree-row {
+      display:flex; align-items:center; gap:.8rem; padding:.55rem .75rem;
+      border-radius:12px; transition:background .12s ease, transform .12s ease, box-shadow .12s ease;
     }
 
-    .controls{
-      display:flex;
-      gap:8px;
-      margin-bottom:12px;
-      align-items:center;
-    }
-    .controls button{
-      background:transparent;
-      border:1px solid #e6edf3;
-      padding:8px 10px;
-      border-radius:8px;
-      cursor:pointer;
-      font-size:13px;
+    .tree-row:hover { background: linear-gradient(90deg, rgba(234,88,12,0.06), rgba(139,92,246,0.04)); transform:translateY(-3px); box-shadow:0 8px 20px rgba(14,28,80,0.06); }
+
+    .folder-btn { display:flex; align-items:center; gap:.75rem; flex:1; background:transparent; border:0; padding:0; text-align:left; }
+    .folder-emoji {
+      width:46px;height:46px;border-radius:10px;display:grid;place-items:center;
+      background: linear-gradient(180deg,#fff1e6,#ffd9b3);
+      color:#9a4200; font-weight:800; font-size:18px;
+      box-shadow:0 6px 18px rgba(234,88,12,0.12);
     }
 
-    ul.nodes{list-style:none;padding:0;margin:0}
-    li.node{
-      padding:6px 8px;
-      border-radius:8px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      margin-bottom:6px;
-      cursor:default;
-      font-size:14px;
-    }
-    li.node:hover{background:#f2f6fb}
-
-    .toggle{
-      width:20px;height:20px;border-radius:4px;display:inline-grid;place-items:center;
-      font-size:12px;border:1px solid #e6edf3;background:white;color:#334155;cursor:pointer;
+    .file-emoji {
+      width:46px;height:46px;border-radius:10px;display:grid;place-items:center;
+      background: linear-gradient(180deg,#e6f6ff,#cfeeff);
+      color:#0c4a6e; font-weight:800; font-size:18px;
+      box-shadow:0 6px 18px rgba(14,165,233,0.08);
     }
 
-    .meta{font-size:12px;color:var(--muted);margin-left:auto}
-
-    a.filelink{color:inherit;text-decoration:none;display:flex;gap:8px;align-items:center;width:100%}
-    .icon{width:18px;text-align:center;font-weight:600}
-
-    /* viewer */
-    .viewer h2{margin-top:0;margin-bottom:8px}
-    .breadcrumbs{font-size:13px;color:var(--muted);margin-bottom:14px}
-    .content-panel{
-      background:linear-gradient(180deg,#fff,#fdfeff);
-      padding:14px;border-radius:10px;border:1px solid #eef2f6;min-height:300px;
-      color:#0f1724;
-      overflow:auto;
-      font-family:var(--mono);
-      font-size:13px;
+    .nested {
+      padding-left:1.2rem; margin-left:.6rem; transition:max-height .28s cubic-bezier(.2,.9,.2,1),opacity .18s ease;
+      max-height:0; opacity:0; overflow:hidden; border-left:2px solid rgba(139,92,246,0.07);
     }
+    .nested.open { max-height:1400px; opacity:1; }
 
-    /* small note */
-    .note{font-size:13px;color:var(--muted);margin-top:10px}
+    .small { font-size:.85rem; color:var(--muted); }
 
-    /* Dark theme only rules: white text, dark backgrounds, and first-page behavior */
-    @media (prefers-color-scheme: dark) {
-      body{
-        background:var(--bg); color:#fff;
-      }
-      .container{background:var(--panel); border:1px solid rgba(255,255,255,0.04); box-shadow:none;}
-      header{background:transparent;border-bottom:1px solid rgba(255,255,255,0.04)}
-      header p{color:var(--muted)}
-      .tree{background:transparent;border-right:1px solid rgba(255,255,255,0.03);padding:20px}
-      .viewer{background:transparent;padding:20px}
-      .controls button{border:1px solid rgba(255,255,255,0.05);color:#e6eef7;background:transparent}
-      li.node{color:#fff}
-      li.node:hover{background:rgba(255,255,255,0.02)}
-      .toggle{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff}
-      .meta{color:rgba(255,255,255,0.45)}
-      .content-panel{background:#071018;border:1px solid rgba(255,255,255,0.04); color:#fff}
-      .breadcrumbs{color:rgba(255,255,255,0.45)}
-      .note{color:rgba(255,255,255,0.55)}
-    }
+    .breadcrumb { gap:.5rem; display:flex; align-items:center; flex-wrap:wrap; }
+    .kbd { background:linear-gradient(90deg,#fff7ed,#fff1f2); padding:.18rem .46rem; border-radius:8px; font-size:.78rem; color:var(--accent); border:1px solid rgba(234,88,12,0.08); }
 
-    /* small responsive tweaks */
-    @media (max-width:880px){
-      .tree{width:100%;border-right:none;border-bottom:1px solid #eef2f6}
-      main{flex-direction:column}
+    .empty { text-align:center; padding:2rem; color:var(--muted); }
+    .spinner { width:28px; height:28px; border-radius:50%; border:3px solid rgba(0,0,0,0.06); border-top-color:var(--accent); animation:spin .8s linear infinite; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .error { color:#b91c1c; font-weight:700; }
+
+    .file-link { color:var(--accent-2); text-decoration:none; font-weight:700; }
+    .file-link:hover { text-decoration:underline; color:var(--accent); }
+
+    @media (max-width:720px){
+      .header { flex-direction:column; align-items:stretch; gap:.6rem; }
+      .controls { justify-content:space-between; width:100%; }
+      .search { min-width:unset; width:100%; }
     }
   </style>
 </head>
 <body>
-  <div class="container" id="app">
-    <header>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <rect x="3" y="3" width="18" height="18" rx="4" fill="#0ea5e9"></rect>
-        <path d="M7 8h10M7 12h10M7 16h6" stroke="#042c3f" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div>
-        <h1>BSDS_Materials</h1>
-        <p>Repository browser — toggle folders to explore subfolders and files</p>
+  <div class="app">
+    <div class="header">
+      <div class="title">
+        <div class="logo">BS</div>
+        <div>
+          <h3 class="mb-0">BSDS Materials</h3>
+          <div class="small muted">Vibrant, friendly, and fast file browser</div>
+        </div>
       </div>
-    </header>
 
-    <main>
-      <aside class="tree" id="sidebar">
-        <div class="controls">
-          <button id="collapseAll" title="Collapse all">Collapse all</button>
-          <button id="expandAll" title="Expand all">Expand all</button>
-          <button id="toggleHidden" title="Show/hide dotfiles">Toggle dotfiles</button>
+      <div class="controls">
+        <input id="search" class="form-control search" placeholder="Search files or folders. Press / to focus" />
+        <div class="d-flex gap-2 align-items-center">
+          <button id="themeToggle" class="btn btn-sm" style="background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:0;">Theme</button>
+          <div id="loading" style="display:none" class="spinner" title="Loading"></div>
         </div>
+      </div>
+    </div>
 
-        <div id="listing">
-          <p class="note">Loading repository listing…</p>
+    <div class="panel">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="breadcrumb" id="breadcrumbs">
+          <div class="small muted">Home</div>
         </div>
-      </aside>
+        <div class="small muted">Use arrow keys to navigate • <span class="kbd">Enter</span> to open</div>
+      </div>
 
-      <section class="viewer">
-        <div class="breadcrumbs" id="breadcrumbs">/</div>
-        <h2 id="viewerTitle">Select a file or folder</h2>
-        <div class="content-panel" id="viewerContent">
-          <div class="note">File preview will appear here when you click a file.</div>
-        </div>
-        <div class="note">This viewer uses the GitHub contents API to read directory structure from <strong>Cyclotron123/BSDS_Materials</strong>.</div>
-      </section>
-    </main>
+      <div id="file-tree" class="d-grid gap-2"></div>
+
+      <div id="empty" class="empty mt-3" style="display:none">No results found.</div>
+
+      <div id="error" class="mt-3" style="display:none"><div class="error">Failed to load repository. Check repo name, branch, or network.</div></div>
+    </div>
   </div>
 
   <script>
-    // Configuration: repository owner and name
-    const OWNER = 'Cyclotron123';
-    const REPO = 'BSDS_Materials';
-    const API_ROOT = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
-
-    // UI elements
-    const listingEl = document.getElementById('listing');
-    const viewerContent = document.getElementById('viewerContent');
-    const viewerTitle = document.getElementById('viewerTitle');
+    const repo = "Cyclotron123/BSDS_Materials";
+    const branch = "main";
+    const apiBase = `https://api.github.com/repos/${repo}/contents`;
+    const treeRoot = document.getElementById('file-tree');
+    const searchInput = document.getElementById('search');
+    const loading = document.getElementById('loading');
+    const emptyEl = document.getElementById('empty');
+    const errorEl = document.getElementById('error');
     const breadcrumbs = document.getElementById('breadcrumbs');
-    const collapseAllBtn = document.getElementById('collapseAll');
-    const expandAllBtn = document.getElementById('expandAll');
-    const toggleHiddenBtn = document.getElementById('toggleHidden');
+    const themeToggle = document.getElementById('themeToggle');
 
-    let showDotfiles = false;
-    let expandedNodes = new Set();
+    let cache = {};
+    let focusedRow = null;
+    let currentPath = "";
+    let allRows = [];
 
-    // Utility: fetch directory contents from GitHub
-    async function fetchContents(path = '') {
-      const url = path ? `${API_ROOT}/${encodeURIComponent(path)}` : API_ROOT;
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error('Failed to fetch repo contents: ' + resp.status);
-      return resp.json(); // array for directories, object for file
+    function showLoading(show){ loading.style.display = show ? 'inline-block' : 'none'; }
+
+    function setBreadcrumb(path){
+      breadcrumbs.innerHTML = '';
+      const parts = path ? path.split('/') : [];
+      const home = document.createElement('div');
+      home.className = 'small muted';
+      home.textContent = 'Home';
+      home.style.cursor = 'pointer';
+      home.onclick = () => { navigateTo(''); };
+      breadcrumbs.appendChild(home);
+
+      let built = '';
+      parts.forEach((p) => {
+        built = built ? built + '/' + p : p;
+        const sep = document.createElement('div');
+        sep.className = 'small muted';
+        sep.textContent = '›';
+        breadcrumbs.appendChild(sep);
+        const el = document.createElement('div');
+        el.className = 'small';
+        el.style.cursor = 'pointer';
+        el.textContent = p;
+        el.onclick = () => { navigateTo(built); };
+        breadcrumbs.appendChild(el);
+      });
     }
 
-    // Render a directory node list
-    function renderNodes(items, parentPath = '') {
-      // Sort folders first then files
-      items.sort((a,b)=>{
-        if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
-        return a.name.localeCompare(b.name, undefined, {sensitivity:'base'});
-      });
+    async function fetchRepoTree(path = ""){
+      const cacheKey = path || '/';
+      if(cache[cacheKey]) return cache[cacheKey];
+      try{
+        showLoading(true);
+        const url = `${apiBase}/${path}?ref=${branch}`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Fetch failed');
+        const data = await res.json();
+        cache[cacheKey] = data;
+        return data;
+      } finally { showLoading(false); }
+    }
 
-      const ul = document.createElement('ul');
-      ul.className = 'nodes';
+    function clearTree(){ treeRoot.innerHTML = ''; allRows = []; focusedRow = null; }
 
-      items.forEach(item => {
-        // Apply dotfile toggle
-        if (!showDotfiles && item.name.startsWith('.')) return;
+    function createFileRow(item){
+      const row = document.createElement('div');
+      row.className = 'tree-row';
+      row.tabIndex = 0;
+      row.dataset.path = item.path;
+      row.dataset.type = item.type;
+      row.innerHTML = `
+        <div class="file-emoji">📄</div>
+        <div style="flex:1">
+          <div style="font-weight:700; color:var(--accent-2)">${item.name}</div>
+          <div class="small muted">${item.path}</div>
+        </div>
+        <div class="small"><a class="file-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a></div>
+      `;
+      return row;
+    }
 
-        const li = document.createElement('li');
-        li.className = 'node';
-        const icon = document.createElement('span');
-        icon.className = 'icon';
+    function createFolderRow(item){
+      const row = document.createElement('div');
+      row.className = 'tree-row';
+      row.tabIndex = 0;
+      row.dataset.path = item.path;
+      row.dataset.type = item.type;
+      row.innerHTML = `
+        <button class="folder-btn" title="Expand folder">
+          <div class="folder-emoji">📁</div>
+          <div style="flex:1; text-align:left;">
+            <div style="font-weight:800; color:var(--accent)">${item.name}</div>
+            <div class="small muted">${item.path}</div>
+          </div>
+          <div class="small muted">Expand</div>
+        </button>
+      `;
+      return row;
+    }
 
-        if (item.type === 'dir') icon.textContent = '📁'; else icon.textContent = '📄';
+    async function buildTree(container, path = ""){
+      try {
+        const items = await fetchRepoTree(path);
+        if(!Array.isArray(items)) throw new Error('Unexpected response');
+        items.sort((a,b) => {
+          if(a.type === b.type) return a.name.localeCompare(b.name);
+          return a.type === 'dir' ? -1 : 1;
+        });
 
-        const label = document.createElement(item.type === 'dir' ? 'button' : 'a');
-        label.className = item.type === 'dir' ? 'folder-btn' : 'filelink';
-        label.style.background='transparent';
-        label.style.border='none';
-        label.style.padding='0';
-        label.style.textAlign='left';
-        label.style.cursor = 'pointer';
+        if(items.length === 0){ container.innerHTML = '<div class="empty">This folder is empty</div>'; return; }
 
-        // file link: open raw GitHub url in viewer
-        if (item.type === 'file') {
-          const fileLink = document.createElement('a');
-          fileLink.href = item.html_url;
-          fileLink.target = '_blank';
-          fileLink.rel = 'noopener';
-          fileLink.className = 'filelink';
-          fileLink.innerHTML = `<span class="icon">📄</span><span>${item.name}</span><span class="meta">${item.size} bytes</span>`;
-          li.appendChild(fileLink);
-        } else {
-          // directory toggle
-          const btn = document.createElement('div');
-          const toggleBtn = document.createElement('span');
-          toggleBtn.className = 'toggle';
-          toggleBtn.textContent = expandedNodes.has(item.path) ? '−' : '+';
-          btn.appendChild(toggleBtn);
+        for(const item of items){
+          const wrapper = document.createElement('div');
+          wrapper.style.marginBottom = '.35rem';
 
-          const title = document.createElement('span');
-          title.textContent = item.name;
-          title.style.marginLeft = '8px';
+          if(item.type === 'dir'){
+            const row = createFolderRow(item);
+            wrapper.appendChild(row);
 
-          const meta = document.createElement('span');
-          meta.className = 'meta';
-          meta.textContent = 'dir';
-          li.append(toggleBtn, title, meta);
+            const nested = document.createElement('div');
+            nested.className = 'nested';
+            wrapper.appendChild(nested);
 
-          // container for children
-          const childContainer = document.createElement('div');
-          childContainer.style.marginLeft = '22px';
-          childContainer.style.display = expandedNodes.has(item.path) ? 'block' : 'none';
-          childContainer.dataset.path = item.path;
-
-          // toggle behavior
-          toggleBtn.addEventListener('click', async (e)=>{
-            e.stopPropagation();
-            if (expandedNodes.has(item.path)) {
-              expandedNodes.delete(item.path);
-              toggleBtn.textContent = '+';
-              childContainer.style.display = 'none';
-            } else {
-              expandedNodes.add(item.path);
-              toggleBtn.textContent = '−';
-              childContainer.style.display = 'block';
-              // lazy-load children if empty
-              if (!childContainer.dataset.loaded) {
-                childContainer.innerHTML = '<div class="note">Loading…</div>';
-                try {
-                  const children = await fetchContents(item.path);
-                  const rendered = renderNodes(children, item.path);
-                  childContainer.innerHTML = '';
-                  childContainer.appendChild(rendered);
-                  childContainer.dataset.loaded = 'true';
-                } catch(err){
-                  childContainer.innerHTML = `<div class="note">Unable to load: ${err.message}</div>`;
+            row.querySelector('.folder-btn').addEventListener('click', async (e) => {
+              e.preventDefault();
+              if(nested.classList.contains('open')){
+                nested.classList.remove('open');
+                row.querySelector('.folder-btn').lastElementChild.textContent = 'Expand';
+              } else {
+                nested.classList.add('open');
+                row.querySelector('.folder-btn').lastElementChild.textContent = 'Collapse';
+                if(!nested.hasChildNodes()){
+                  await buildTree(nested, item.path);
                 }
               }
-            }
-          });
-        }
+            });
 
-        // Append for files and directories
-        if (item.type === 'file') {
-          li.appendChild(document.createElement('span')); // spacer
-          li.appendChild(li.querySelector('.filelink'));
-        } else {
-          // for directories, append child container placeholder
-          const childContainer = document.createElement('div');
-          childContainer.style.marginLeft = '22px';
-          childContainer.style.display = expandedNodes.has(item.path) ? 'block' : 'none';
-          childContainer.dataset.path = item.path;
-          if (expandedNodes.has(item.path)) {
-            // load immediately if expanded
-            (async ()=>{
-              try {
-                const children = await fetchContents(item.path);
-                childContainer.innerHTML = '';
-                childContainer.appendChild(renderNodes(children, item.path));
-                childContainer.dataset.loaded = 'true';
-              } catch(err){
-                childContainer.innerHTML = `<div class="note">Unable to load: ${err.message}</div>`;
-              }
-            })();
+            row.addEventListener('keydown', (ev) => {
+              if(ev.key === 'Enter') row.querySelector('.folder-btn').click();
+              if(ev.key === 'ArrowRight') { if(!nested.classList.contains('open')) row.querySelector('.folder-btn').click(); }
+              if(ev.key === 'ArrowLeft') { if(nested.classList.contains('open')) row.querySelector('.folder-btn').click(); }
+            });
+
+            allRows.push(row);
+          } else {
+            const row = createFileRow(item);
+            wrapper.appendChild(row);
+            row.addEventListener('keydown', (ev) => { if(ev.key === 'Enter') window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank'); });
+            allRows.push(row);
           }
-          li.appendChild(childContainer);
-        }
 
-        ul.appendChild(li);
+          container.appendChild(wrapper);
+        }
+      } catch(err){
+        errorEl.style.display = 'block';
+      }
+    }
+
+    async function navigateTo(path){
+      currentPath = path || '';
+      setBreadcrumb(currentPath);
+      clearTree();
+      emptyEl.style.display = 'none';
+      errorEl.style.display = 'none';
+      await buildTree(treeRoot, currentPath);
+      filterAndShow();
+    }
+
+    function filterAndShow(){
+      const q = (searchInput.value || '').trim().toLowerCase();
+      let visible = 0;
+      allRows.forEach(r => {
+        const title = r.querySelector('div > div')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
+        if(!q || title.includes(q)){
+          r.style.display = '';
+          visible++;
+        } else {
+          r.style.display = 'none';
+        }
       });
-
-      return ul;
+      emptyEl.style.display = visible === 0 ? '' : 'none';
     }
 
-    // Top-level listing builder with special "dark-mode" first-page behavior:
-    // - In dark mode (prefers-color-scheme: dark) the root listing will show only directories and hide index.html and README.md
-    // - In light mode root shows everything (subject to dotfile toggle)
-    async function buildRootListing() {
-      listingEl.innerHTML = '<p class="note">Loading repository listing…</p>';
-      try {
-        const items = await fetchContents('');
-        // Check prefers-color-scheme
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        // Filter out README and index.html only on first page when dark mode
-        let filtered = items.slice();
-
-        if (prefersDark) {
-          filtered = filtered.filter(it => it.type === 'dir');
-          // ensure index.html and README are not shown (even if they are directories with those names)
-          filtered = filtered.filter(it => !['index.html','README.md','README','readme.md'].includes(it.name));
-        } else {
-          // In light mode hide index.html and README.md as well? The user asked to hide on first page only in dark mode.
-          // We'll show them in light mode per instruction ambiguity -> so do not filter them out.
-        }
-
-        // Additionally always hide index.html and README.md from the root listing regardless of case when user asked "hide index.html and readme files from the first page"
-        // Only apply that extra hide when dark mode is active (we already did).
-        // Now render
-        const tree = renderNodes(filtered, '');
-        listingEl.innerHTML = '';
-        listingEl.appendChild(tree);
-
-        // Add note if dark-mode first-page restriction is active
-        if (prefersDark) {
-          const note = document.createElement('div');
-          note.className = 'note';
-          note.textContent = 'Dark mode: showing parent folders only on this first page; index and README hidden here.';
-          listingEl.appendChild(note);
-        }
-      } catch(err){
-        listingEl.innerHTML = `<div class="note">Error loading repository: ${err.message}</div>`;
-      }
-    }
-
-    // Expand/collapse helpers
-    function collapseAll() {
-      expandedNodes.clear();
-      // rebuild listing to collapse children
-      buildRootListing();
-    }
-    function expandAll() {
-      // naive strategy: expand first level only (to avoid huge loads). For deeper expansion, users can expand manually.
-      // Expand every directory visible at root
-      (async ()=>{
-        try{
-          const items = await fetchContents('');
-          items.forEach(it => { if (it.type==='dir') expandedNodes.add(it.path); });
-          buildRootListing();
-        }catch(e){ console.warn(e); }
-      })();
-    }
-
-    // Toggle dotfiles
-    function toggleDotfiles(){
-      showDotfiles = !showDotfiles;
-      buildRootListing();
-    }
-
-    // Wire UI buttons
-    collapseAllBtn.addEventListener('click', collapseAll);
-    expandAllBtn.addEventListener('click', expandAll);
-    toggleHiddenBtn.addEventListener('click', toggleDotfiles);
-
-    // Breadcrumb + file preview behavior: open file raw in iframe-like area for small text files
-    // Since the listing contains anchor links to GitHub file pages, we enhance by listening for clicks on file rows to preview
-    listingEl.addEventListener('click', async (e)=>{
-      const a = e.target.closest('a.filelink');
-      if (!a) return;
-      e.preventDefault();
-      const href = a.href;
-      viewerTitle.textContent = a.textContent.trim();
-      breadcrumbs.textContent = href.replace('https://github.com/','/'); // quick breadcrumb
-      viewerContent.innerHTML = '<div class="note">Loading file preview…</div>';
-
-      // Use GitHub raw URL by transforming html_url to raw.githubusercontent.com URL
-      // html_url format: https://github.com/OWNER/REPO/blob/branch/path
-      try {
-        const raw = href.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/','/');
-        const resp = await fetch(raw);
-        if (!resp.ok) {
-          viewerContent.innerHTML = `<div class="note">Preview not available. Opening on GitHub in a new tab.</div>`;
-          window.open(href, '_blank');
-          return;
-        }
-
-        const contentType = resp.headers.get('content-type') || '';
-        if (contentType.startsWith('text') || contentType.includes('json') || contentType.includes('javascript') || contentType.includes('markdown')) {
-          const txt = await resp.text();
-          // simple syntax safe display
-          viewerContent.innerHTML = `<pre style="white-space:pre-wrap;word-break:break-word;margin:0">${escapeHtml(txt)}</pre>`;
-        } else {
-          viewerContent.innerHTML = `<div class="note">Binary or non-text file. Opening on GitHub in a new tab.</div>`;
-          window.open(href, '_blank');
-        }
-      } catch(err){
-        viewerContent.innerHTML = `<div class="note">Could not fetch preview: ${err.message}</div>`;
-      }
+    document.addEventListener('keydown', (e) => {
+      if(e.key === '/') { e.preventDefault(); searchInput.focus(); return; }
+      if(document.activeElement === searchInput) return;
+      const visibleRows = allRows.filter(r => r.style.display !== 'none');
+      if(visibleRows.length === 0) return;
+      let idx = visibleRows.indexOf(focusedRow);
+      if(e.key === 'ArrowDown') { idx = idx < visibleRows.length - 1 ? idx + 1 : 0; setFocus(visibleRows[idx]); e.preventDefault(); }
+      else if(e.key === 'ArrowUp') { idx = idx > 0 ? idx - 1 : visibleRows.length - 1; setFocus(visibleRows[idx]); e.preventDefault(); }
     });
 
-    // Escape HTML for safe display
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+    function setFocus(el){ if(focusedRow) focusedRow.classList.remove('focused'); focusedRow = el; if(!focusedRow) return; focusedRow.focus(); }
 
-    // Initialize
-    buildRootListing();
+    let tId = null;
+    searchInput.addEventListener('input', () => { clearTimeout(tId); tId = setTimeout(filterAndShow, 160); });
 
-    // Rebuild root listing on color scheme change (so dark-mode first-page behavior updates live)
-    if (window.matchMedia) {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      mq.addEventListener && mq.addEventListener('change', ()=> buildRootListing());
+    function applyTheme(theme){
+      if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
+      else document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('bsds_theme', theme);
     }
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+    const savedTheme = localStorage.getItem('bsds_theme') || 'light';
+    applyTheme(savedTheme);
+
+    navigateTo('');
   </script>
 </body>
 </html>
