@@ -1,93 +1,86 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>BSDS_Materials — File Manager</title>
-<style>
-:root{
-  --bg-dark:#021026; --bg-dark2:#06243b;
-  --fg:#dbeefb; --accent:#4fc3f7; --muted:#9fb7cf;
-}
-body{
-  margin:0; font-family:Segoe UI,Roboto,system-ui;
-  background:linear-gradient(180deg,var(--bg-dark),var(--bg-dark2));
-  color:var(--fg); padding:20px;
-}
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-h1{margin:0;font-size:18px;color:#eaf8ff}
-.btn{padding:6px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
-.btn.primary{color:var(--accent);border-color:rgba(79,195,247,0.3)}
-.wrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
-.panel{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:12px}
-.grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
-.tile{width:120px;height:100px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
-.tile:hover{background:rgba(79,195,247,0.05)}
-.tile .ico{font-size:32px;color:var(--accent)}
-.tile .label{margin-top:6px;font-weight:600}
-.list{margin-top:12px;display:flex;flex-direction:column;gap:6px}
-.row{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px}
-.row:hover{background:rgba(255,255,255,0.03)}
-.left{display:flex;gap:8px;align-items:center}
-.ico-sm{width:28px;height:28px;border-radius:4px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;color:var(--accent)}
-.meta{font-size:12px;color:var(--muted)}
-input[type="search"]{width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:inherit}
-.small{font-size:12px;color:var(--muted)}
-body.light{--bg-dark:#f7fafc;--bg-dark2:#eef6ff;--fg:#0b2b3a;--accent:#0b63b7;--muted:#374151;background:linear-gradient(180deg,#f7fbff,#eef6ff)}
-@media(max-width:900px){.wrap{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<header>
-  <h1>BSDS_Materials</h1>
-  <div>
-    <button id="themeBtn" class="btn">Toggle Theme</button>
-    <a class="btn primary" href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank">GitHub</a>
-  </div>
-</header>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSDS Materials - File Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<div class="wrap">
-  <main class="panel">
-    <strong>Primary folders</strong>
-    <div id="grid" class="grid"></div>
-  </main>
-  <aside class="panel">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <strong id="sideTitle">Details</strong>
-      <div id="sidePath" class="small">/</div>
-    </div>
-    <div style="margin-top:8px"><input id="search" type="search" placeholder="Filter"/></div>
-    <div id="sideList" class="list" style="margin-top:10px"><div class="small">Select a folder</div></div>
-  </aside>
-</div>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #1a2940 100%);
+            color: #e8eaed;
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-<script>
-const owner='Cyclotron123', repo='BSDS_Materials', branch='main';
-const grid=document.getElementById('grid'), sideList=document.getElementById('sideList'),
-      sideTitle=document.getElementById('sideTitle'), sidePath=document.getElementById('sidePath'),
-      search=document.getElementById('search'), themeBtn=document.getElementById('themeBtn');
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(15, 30, 50, 0.8);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
 
-function api(p=''){return `https://api.github.com/repos/${owner}/${repo}/contents/${p}?ref=${branch}`;}
-async function fetchContents(p=''){const r=await fetch(api(p));if(!r.ok)throw new Error(r.status);return r.json();}
-function icon(name,type){if(type==='dir')return '📁';const ext=(name.split('.').pop()||'').toLowerCase();const map={md:'📄',txt:'📄',pdf:'📕',png:'🖼️',jpg:'🖼️',jpeg:'🖼️',py:'🐍',r:'📈',go:'🐹',ipynb:'📓'};return map[ext]||'📄';}
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2c4966;
+        }
 
-async function loadRoot(){
-  grid.innerHTML='loading…';
-  try{const items=await fetchContents('');const dirs=items.filter(i=>i.type==='dir');grid.innerHTML='';dirs.forEach(d=>{const t=document.createElement('div');t.className='tile';t.innerHTML=`<div class="ico">📁</div><div class="label">${d.name}</div>`;t.onclick=()=>openFolder(d.path);grid.appendChild(t);});}
-  catch(e){grid.innerHTML='<div class="small">Error loading</div>';}
-}
+        h1 {
+            color: #8ab4f8;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
 
-async function openFolder(path){
-  sideTitle.textContent=path.split('/').pop()||'/';sidePath.textContent='/'+path;sideList.innerHTML='loading…';
-  try{const items=await fetchContents(path);items.sort((a,b)=>a.type===b.type?a.name.localeCompare(b.name):(a.type==='dir'?-1:1));
-    sideList.innerHTML='';items.forEach(it=>{const r=document.createElement('div');r.className='row';r.innerHTML=`<div class="left"><div class="ico-sm">${icon(it.name,it.type)}</div><div><div>${it.name}</div><div class="meta">${it.type}</div></div></div><div></div>`;
-      const ctrl=r.querySelector('div:last-child');if(it.type==='dir'){const b=document.createElement('button');b.className='btn';b.textContent='Open';b.onclick=()=>openFolder(it.path);ctrl.appendChild(b);}else{const v=document.createElement('a');v.className='btn';v.textContent='View';v.href=it.html_url;v.target='_blank';ctrl.appendChild(v);}sideList.appendChild(r);});}
-  catch(e){sideList.innerHTML='<div class="small">Error</div>';}
-}
+        .subtitle {
+            color: #9aa0a6;
+            font-size: 1.1em;
+        }
 
-search.addEventListener('input',()=>{const q=search.value.toLowerCase();sideList.querySelectorAll('.row').forEach(r=>{const n=r.querySelector('.left div div').textContent.toLowerCase();r.style.display=n.includes(q)?'':'none';});});
-(function(){const key='themeDark';const saved=localStorage.getItem(key);if(saved==='false')document.body.classList.add('light');themeBtn.onclick=()=>{document.body.classList.toggle('light');localStorage.setItem(key,!document.body.classList.contains('light'));};})();
-loadRoot();
-</script>
-</body>
-</html>
+        .file-browser {
+            list-style: none;
+        }
+
+        .folder, .file {
+            margin: 5px 0;
+            padding: 12px 16px;
+            background: rgba(26, 41, 64, 0.6);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .folder:hover, .file:hover {
+            background: rgba(36, 56, 84, 0.8);
+            border-left: 3px solid #8ab4f8;
+            transform: translateX(5px);
+        }
+
+        .folder-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+
+        .folder-icon, .file-icon {
+            margin-right: 12px;
+            font-size: 1.3em;
+        }
+
+        .folder-icon {
+            color: #8ab4f8;
+        }
+
+        .file-icon {
+            color: #9aa0a6;
+        }
