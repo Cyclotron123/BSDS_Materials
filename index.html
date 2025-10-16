@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS Materials — Dark Blue</title>
+  <title>BSDS Materials — Dark Blue (Click Row to Toggle)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     /* Dark blue theme tokens */
@@ -11,9 +11,9 @@
       --bg: linear-gradient(180deg,#071020 0%, #081428 100%);
       --card: linear-gradient(180deg,#071728, #0a2133);
       --muted: #9fb4d6;
-      --accent: #38bdf8;        /* sky blue */
-      --accent-2: #60a5fa;      /* lighter blue */
-      --accent-3: #7dd3fc;      /* highlight */
+      --accent: #38bdf8;
+      --accent-2: #60a5fa;
+      --accent-3: #7dd3fc;
       --folder: linear-gradient(180deg,#0f2a3a,#0c2432);
       --file: linear-gradient(180deg,#07293c,#043040);
       --radius: 14px;
@@ -21,8 +21,6 @@
       --glass: rgba(255,255,255,0.03);
       --border-weak: rgba(255,255,255,0.04);
     }
-
-    /* light variant used when toggled */
     [data-theme="light"]{
       --bg: linear-gradient(180deg,#f7fbff 0%, #fff7ff 100%);
       --card:#ffffff;
@@ -54,15 +52,12 @@
     .wrap{ max-width:1100px; margin:0 auto; }
 
     /* Header */
-    .header {
-      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
-    }
+    .header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
     .brand { display:flex; gap:12px; align-items:center; }
     .logo {
-      width:64px; height:64px; border-radius:12px; display:grid; place-items:center; color:#042639;
+      width:64px; height:64px; border-radius:12px; display:grid; place-items:center;
       background: linear-gradient(135deg,var(--accent-2),var(--accent));
-      font-weight:800; font-size:20px; box-shadow:var(--shadow);
-      color: #021826;
+      font-weight:800; font-size:20px; box-shadow:var(--shadow); color:#021826;
     }
     .title h1{ margin:0; font-size:20px; letter-spacing:-0.2px; color: #e6f6ff; }
     .title .subtitle{ font-size:13px; color:var(--muted); margin-top:4px; }
@@ -80,26 +75,21 @@
       border:1px solid var(--border-weak);
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       padding:.45rem .7rem; border-radius:10px; cursor:pointer; color:var(--muted);
-      display:inline-flex; gap:.5rem; align-items:center;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.45);
+      display:inline-flex; gap:.5rem; align-items:center; box-shadow: 0 6px 18px rgba(2,6,23,0.45);
     }
     .btn-primary {
       background: linear-gradient(90deg,var(--accent),var(--accent-2));
       color:#042639; border:0; padding:.45rem .85rem; border-radius:10px; cursor:pointer;
-      box-shadow:0 8px 24px rgba(8,32,48,0.5);
-      font-weight:700;
+      box-shadow:0 8px 24px rgba(8,32,48,0.5); font-weight:700;
     }
 
     /* Panel */
     .panel {
       background: var(--card); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow);
-      border: 1px solid var(--border-weak);
-      color: #e6eef7;
+      border: 1px solid var(--border-weak); color: #e6eef7;
     }
 
-    .toolbar {
-      display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;
-    }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
     .breadcrumb { display:flex; gap:8px; align-items:center; color:var(--muted); font-size:13px; flex-wrap:wrap; }
     .kbd { background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:.12rem .36rem; border-radius:8px; font-size:.78rem; color:var(--accent); border:1px solid var(--border-weak); }
 
@@ -110,23 +100,14 @@
       transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
       background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
       border: 1px solid rgba(255,255,255,0.02);
+      cursor: pointer;
+      user-select: none;
     }
     .node:hover { transform:translateY(-4px); box-shadow:0 18px 40px rgba(2,6,23,0.6); background: linear-gradient(90deg, rgba(56,189,248,0.03), rgba(96,165,250,0.02)); }
 
-    .icon {
-      width:52px; height:52px; border-radius:10px; display:grid; place-items:center; font-weight:800;
-      color: #022b3a;
-    }
-    .icon.folder {
-      background: linear-gradient(180deg,#072b40,#053043);
-      color: var(--accent-3);
-      box-shadow: 0 8px 24px rgba(6,37,56,0.6);
-    }
-    .icon.file {
-      background: linear-gradient(180deg,#062a3a,#042532);
-      color: var(--accent-2);
-      box-shadow: 0 8px 24px rgba(3,28,44,0.6);
-    }
+    .icon { width:52px; height:52px; border-radius:10px; display:grid; place-items:center; font-weight:800; color: #022b3a; }
+    .icon.folder { background: linear-gradient(180deg,#072b40,#053043); color: var(--accent-3); box-shadow: 0 8px 24px rgba(6,37,56,0.6); }
+    .icon.file { background: linear-gradient(180deg,#062a3a,#042532); color: var(--accent-2); box-shadow: 0 8px 24px rgba(3,28,44,0.6); }
 
     .meta { flex:1; min-width:0; }
     .meta .name { font-weight:700; color:#e8f8ff; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -134,10 +115,8 @@
 
     .actions { display:flex; gap:8px; align-items:center; }
     .open-link {
-      color:#002034;
-      background: linear-gradient(90deg,var(--accent-3),var(--accent));
-      font-weight:700; text-decoration:none; padding:.36rem .6rem; border-radius:10px;
-      border: 1px solid rgba(255,255,255,0.03);
+      color:#002034; background: linear-gradient(90deg,var(--accent-3),var(--accent));
+      font-weight:700; text-decoration:none; padding:.36rem .6rem; border-radius:10px; border: 1px solid rgba(255,255,255,0.03);
     }
     .open-link:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(8,32,48,0.45); }
 
@@ -150,7 +129,6 @@
 
     .empty { padding:28px; text-align:center; color:var(--muted); font-weight:600; }
 
-    /* Small responsive tweaks */
     @media (max-width:900px){
       .search { min-width:unset; width:100%; }
       .controls { flex:1; }
@@ -159,6 +137,7 @@
 
     /* accessibility focus */
     .node:focus, .tree-row:focus { outline: 2px solid rgba(56,189,248,0.18); outline-offset: 4px; }
+    a.open-link { pointer-events: auto; } /* ensure links remain clickable inside node */
   </style>
 </head>
 <body>
@@ -168,7 +147,7 @@
         <div class="logo">BS</div>
         <div class="title">
           <h1>BSDS Materials</h1>
-          <div class="subtitle">Dark blue Theme, keyboard , quick open</div>
+          <div class="subtitle">Dark blue themed file browser — click any folder row to toggle</div>
         </div>
       </div>
 
@@ -252,9 +231,15 @@
           <div class="path">${item.path}</div>
         </div>
         <div class="actions">
-          <a class="open-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a>
+          <a class="open-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank" rel="noopener">Open</a>
         </div>
       `;
+      // clicking the row opens the file (but keep link clickable)
+      row.addEventListener('click', (e) => {
+        // if the user clicked the Open link itself, do nothing here
+        if (e.target.closest('a.open-link')) return;
+        window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank');
+      });
       row.addEventListener('keydown', e=> { if(e.key==='Enter') window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank'); });
       return row;
     }
@@ -269,7 +254,7 @@
           <div class="path">${item.path}</div>
         </div>
         <div class="actions">
-          <button class="btn-ghost">Expand</button>
+          <span class="small" style="color:var(--muted)">Click to open</span>
         </div>
       `;
       return row;
@@ -290,20 +275,24 @@
             const nested = document.createElement('div'); nested.className='nested';
             wrap.appendChild(nested);
 
-            const btn = row.querySelector('.btn-ghost');
-            btn.addEventListener('click', async (ev) => {
-              ev.preventDefault();
-              if(nested.classList.contains('open')){ nested.classList.remove('open'); btn.textContent='Expand'; }
-              else {
-                nested.classList.add('open'); btn.textContent='Collapse';
-                if(!nested.hasChildNodes()) await build(nested, it.path);
+            // Toggle nested on row click
+            row.addEventListener('click', async (ev) => {
+              // ensure clicking any actionable child (like link) doesn't toggle
+              if (ev.target.closest('a')) return;
+              if (nested.classList.contains('open')) {
+                nested.classList.remove('open');
+              } else {
+                nested.classList.add('open');
+                if (!nested.hasChildNodes()) await build(nested, it.path);
               }
             });
 
+            // keyboard also supports Enter to toggle the row
             row.addEventListener('keydown', ev=>{
-              if(ev.key==='Enter') btn.click();
-              if(ev.key==='ArrowRight' && !nested.classList.contains('open')) btn.click();
-              if(ev.key==='ArrowLeft' && nested.classList.contains('open')) btn.click();
+              if(ev.key === 'Enter'){
+                ev.preventDefault();
+                row.click();
+              }
             });
 
             allRows.push(row);
@@ -333,7 +322,8 @@
       const q = (searchInput.value||'').toLowerCase().trim();
       let visible = 0;
       allRows.forEach(r=>{
-        const txt = r.querySelector('.name')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
+        const nameEl = r.querySelector('.name');
+        const txt = nameEl ? nameEl.textContent.toLowerCase() : r.dataset.path.toLowerCase();
         if(!q || txt.includes(q)){ r.style.display=''; visible++; } else r.style.display='none';
       });
       emptyEl.style.display = visible === 0 ? '' : 'none';
