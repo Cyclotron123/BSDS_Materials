@@ -3,145 +3,160 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS Materials — Vibrant</title>
+  <title>BSDS Materials — Copilot Style</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
+    /* Core tokens */
     :root{
-      --bg: linear-gradient(180deg,#fff7ed 0%, #fff1f2 100%);
+      --bg-1: linear-gradient(180deg,#f7fbff 0%, #fff7ff 100%);
       --card:#ffffff;
-      --muted:#475569;
-      --accent:#ea580c;
-      --accent-2:#8b5cf6;
-      --folder:#ffedd5;
-      --file:#e0f2fe;
-      --radius:16px;
-      --shadow: 0 10px 30px rgba(14,28,80,0.08);
+      --muted:#51607a;
+      --accent:#0ea5a4;
+      --accent-2:#7c3aed;
+      --accent-3:#ff6b6b;
+      --folder:#fff4e6;
+      --file:#e8f9ff;
+      --radius:14px;
       --glass: rgba(255,255,255,0.6);
+      --shadow-lg: 0 12px 30px rgba(20,30,60,0.08);
+      --shadow-sm: 0 6px 18px rgba(20,30,60,0.06);
     }
     [data-theme="dark"]{
-      --bg: linear-gradient(180deg,#081028 0%, #07122a 100%);
-      --card:linear-gradient(180deg,#08182a, #061322);
+      --bg-1: linear-gradient(180deg,#071528 0%, #061022 100%);
+      --card:linear-gradient(180deg,#071827,#041422);
       --muted:#9fb4d6;
-      --accent:#ff7a18;
-      --accent-2:#a78bfa;
-      --folder:#3b2b0d;
-      --file:#0b2233;
-      --shadow: none;
-      color: #e6eef7;
+      --accent:#20c997;
+      --accent-2:#8b5cf6;
+      --accent-3:#ff7b7b;
+      --folder:#2b1f0f;
+      --file:#082933;
+      --shadow-lg: none;
+      color:#e6eef7;
     }
 
     html,body{height:100%}
     body{
-      background: var(--bg);
-      padding:2.25rem;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      margin:0;
+      padding:28px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: var(--bg-1);
       transition: background .25s ease, color .25s ease;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
 
-    .app { max-width:1100px; margin:0 auto; }
+    .wrap{ max-width:1100px; margin:0 auto; }
 
-    .header { display:flex; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:1rem; }
-    .title { display:flex; gap:.75rem; align-items:center; }
+    /* Header */
+    .header {
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
+    }
+    .brand {
+      display:flex; gap:12px; align-items:center;
+    }
     .logo {
-      width:64px; height:64px; border-radius:14px; display:grid; place-items:center; font-weight:800;
-      color:#fff; background: linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:var(--shadow);
+      width:64px; height:64px; border-radius:12px; display:grid; place-items:center; color:#fff;
+      background: linear-gradient(135deg,var(--accent),var(--accent-2));
+      font-weight:800; font-size:20px; box-shadow:var(--shadow-lg);
+    }
+    .title h1{ margin:0; font-size:20px; letter-spacing:-0.2px; }
+    .title .subtitle{ font-size:13px; color:var(--muted); margin-top:4px; }
+
+    /* Controls */
+    .controls { display:flex; gap:10px; align-items:center; }
+    .search { min-width:320px; max-width:42vw; }
+    .btn-ghost {
+      border:1px solid rgba(0,0,0,0.06);
+      background: linear-gradient(180deg,#ffffff, #fbfbff);
+      padding:.45rem .7rem; border-radius:10px; cursor:pointer; color:var(--muted);
+      display:inline-flex; gap:.5rem; align-items:center;
+      box-shadow:var(--shadow-sm);
+    }
+    .btn-primary {
+      background: linear-gradient(90deg,var(--accent),var(--accent-2));
+      color:#fff; border:0; padding:.45rem .85rem; border-radius:10px; cursor:pointer;
+      box-shadow:0 8px 24px rgba(124,58,237,0.12);
+      font-weight:600;
     }
 
-    .controls { display:flex; gap:.5rem; align-items:center; }
-    .search { min-width:260px; }
-
+    /* Panel */
     .panel {
-      background: var(--card);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:1.1rem;
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,0.6);
-      backdrop-filter: blur(6px);
+      background:var(--card); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow-lg);
+      border: 1px solid rgba(124,58,237,0.03);
     }
 
-    .tree-row {
-      display:flex; align-items:center; gap:.8rem; padding:.55rem .75rem;
-      border-radius:12px; transition:background .12s ease, transform .12s ease, box-shadow .12s ease;
+    .toolbar {
+      display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;
+    }
+    .breadcrumb { display:flex; gap:8px; align-items:center; color:var(--muted); font-size:13px; flex-wrap:wrap; }
+    .kbd { background:linear-gradient(180deg,#f1f8f7,#ffffff); padding:.12rem .36rem; border-radius:8px; font-size:.78rem; color:var(--accent); border:1px solid rgba(14,165,233,0.06); }
+
+    /* File tree */
+    .tree { display:flex; flex-direction:column; gap:8px; }
+    .node {
+      display:flex; align-items:center; gap:12px; padding:10px; border-radius:12px;
+      transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+    .node:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(14,20,40,0.06); background: linear-gradient(90deg, rgba(14,165,233,0.03), rgba(124,58,237,0.02)); }
+    .icon {
+      width:52px; height:52px; border-radius:10px; display:grid; place-items:center; font-weight:800;
     }
 
-    .tree-row:hover { background: linear-gradient(90deg, rgba(234,88,12,0.06), rgba(139,92,246,0.04)); transform:translateY(-3px); box-shadow:0 8px 20px rgba(14,28,80,0.06); }
+    .icon.folder { background: linear-gradient(180deg,#fff4e6,#ffd9b3); color:#b45309; box-shadow:0 6px 18px rgba(234,88,12,0.12); }
+    .icon.file { background: linear-gradient(180deg,#e8f9ff,#cfeeff); color:#065f46; box-shadow:0 6px 18px rgba(6,182,212,0.06); }
 
-    .folder-btn { display:flex; align-items:center; gap:.75rem; flex:1; background:transparent; border:0; padding:0; text-align:left; }
-    .folder-emoji {
-      width:46px;height:46px;border-radius:10px;display:grid;place-items:center;
-      background: linear-gradient(180deg,#fff1e6,#ffd9b3);
-      color:#9a4200; font-weight:800; font-size:18px;
-      box-shadow:0 6px 18px rgba(234,88,12,0.12);
-    }
+    .meta { flex:1; min-width:0; }
+    .meta .name { font-weight:700; color:var(--muted); font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .meta .path { font-size:12px; color:var(--muted); margin-top:4px; opacity:0.9; }
 
-    .file-emoji {
-      width:46px;height:46px;border-radius:10px;display:grid;place-items:center;
-      background: linear-gradient(180deg,#e6f6ff,#cfeeff);
-      color:#0c4a6e; font-weight:800; font-size:18px;
-      box-shadow:0 6px 18px rgba(14,165,233,0.08);
-    }
+    .actions { display:flex; gap:8px; align-items:center; }
+    .open-link { color:var(--accent-2); font-weight:700; text-decoration:none; padding:.36rem .6rem; border-radius:10px; border:1px solid rgba(124,58,237,0.06); background:linear-gradient(180deg,#fff,#fbf8ff); }
+    .open-link:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(124,58,237,0.06); }
 
     .nested {
-      padding-left:1.2rem; margin-left:.6rem; transition:max-height .28s cubic-bezier(.2,.9,.2,1),opacity .18s ease;
-      max-height:0; opacity:0; overflow:hidden; border-left:2px solid rgba(139,92,246,0.07);
+      margin-left:64px; margin-top:8px; border-left:2px dashed rgba(124,58,237,0.06); padding-left:16px;
+      overflow:hidden; transition: max-height .28s cubic-bezier(.2,.9,.2,1), opacity .18s ease;
+      max-height:0; opacity:0;
     }
     .nested.open { max-height:1400px; opacity:1; }
 
-    .small { font-size:.85rem; color:var(--muted); }
+    .empty { padding:28px; text-align:center; color:var(--muted); font-weight:600; }
 
-    .breadcrumb { gap:.5rem; display:flex; align-items:center; flex-wrap:wrap; }
-    .kbd { background:linear-gradient(90deg,#fff7ed,#fff1f2); padding:.18rem .46rem; border-radius:8px; font-size:.78rem; color:var(--accent); border:1px solid rgba(234,88,12,0.08); }
-
-    .empty { text-align:center; padding:2rem; color:var(--muted); }
-    .spinner { width:28px; height:28px; border-radius:50%; border:3px solid rgba(0,0,0,0.06); border-top-color:var(--accent); animation:spin .8s linear infinite; }
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    .error { color:#b91c1c; font-weight:700; }
-
-    .file-link { color:var(--accent-2); text-decoration:none; font-weight:700; }
-    .file-link:hover { text-decoration:underline; color:var(--accent); }
-
-    @media (max-width:720px){
-      .header { flex-direction:column; align-items:stretch; gap:.6rem; }
-      .controls { justify-content:space-between; width:100%; }
+    /* Responsive */
+    @media (max-width:900px){
       .search { min-width:unset; width:100%; }
+      .controls { flex:1; }
+      .header { flex-direction:column; align-items:flex-start; gap:10px; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="wrap">
     <div class="header">
-      <div class="title">
-        <div class="logo">BS</div>
-        <div>
-          <h3 class="mb-0">BSDS Materials</h3>
-          <div class="small muted">Vibrant, friendly, and fast file browser</div>
+      <div class="brand">
+        <div class="logo">CP</div>
+        <div class="title">
+          <h1>BSDS Materials</h1>
+          <div class="subtitle">Copilot-inspired vibrant UI — search, keyboard nav, and quick open</div>
         </div>
       </div>
 
       <div class="controls">
         <input id="search" class="form-control search" placeholder="Search files or folders. Press / to focus" />
-        <div class="d-flex gap-2 align-items-center">
-          <button id="themeToggle" class="btn btn-sm" style="background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:0;">Theme</button>
-          <div id="loading" style="display:none" class="spinner" title="Loading"></div>
-        </div>
+        <button id="newTheme" class="btn-primary">Toggle Theme</button>
       </div>
     </div>
 
     <div class="panel">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="breadcrumb" id="breadcrumbs">
-          <div class="small muted">Home</div>
-        </div>
-        <div class="small muted">Use arrow keys to navigate • <span class="kbd">Enter</span> to open</div>
+      <div class="toolbar">
+        <div class="breadcrumb" id="breadcrumbs"><div>Home</div></div>
+        <div class="small" style="color:var(--muted)">Arrow keys to navigate • <span class="kbd">Enter</span> to open</div>
       </div>
 
-      <div id="file-tree" class="d-grid gap-2"></div>
+      <div id="file-tree" class="tree"></div>
 
-      <div id="empty" class="empty mt-3" style="display:none">No results found.</div>
-
-      <div id="error" class="mt-3" style="display:none"><div class="error">Failed to load repository. Check repo name, branch, or network.</div></div>
+      <div id="empty" class="empty" style="display:none">No results found</div>
+      <div id="error" class="empty" style="display:none;color:#ff4d4f">Could not load repository</div>
     </div>
   </div>
 
@@ -151,207 +166,171 @@
     const apiBase = `https://api.github.com/repos/${repo}/contents`;
     const treeRoot = document.getElementById('file-tree');
     const searchInput = document.getElementById('search');
-    const loading = document.getElementById('loading');
     const emptyEl = document.getElementById('empty');
     const errorEl = document.getElementById('error');
     const breadcrumbs = document.getElementById('breadcrumbs');
-    const themeToggle = document.getElementById('themeToggle');
+    const themeBtn = document.getElementById('newTheme');
 
     let cache = {};
-    let focusedRow = null;
-    let currentPath = "";
     let allRows = [];
-
-    function showLoading(show){ loading.style.display = show ? 'inline-block' : 'none'; }
+    let focused = null;
+    let currentPath = "";
 
     function setBreadcrumb(path){
       breadcrumbs.innerHTML = '';
-      const parts = path ? path.split('/') : [];
-      const home = document.createElement('div');
-      home.className = 'small muted';
-      home.textContent = 'Home';
-      home.style.cursor = 'pointer';
-      home.onclick = () => { navigateTo(''); };
+      const pieces = path ? path.split('/') : [];
+      const home = document.createElement('div'); home.style.cursor='pointer'; home.textContent='Home';
+      home.onclick = () => navigateTo('');
       breadcrumbs.appendChild(home);
-
       let built = '';
-      parts.forEach((p) => {
+      pieces.forEach(p => {
         built = built ? built + '/' + p : p;
-        const sep = document.createElement('div');
-        sep.className = 'small muted';
-        sep.textContent = '›';
+        const sep = document.createElement('div'); sep.textContent='›'; sep.style.opacity='0.7'; sep.style.margin='0 6px';
         breadcrumbs.appendChild(sep);
-        const el = document.createElement('div');
-        el.className = 'small';
-        el.style.cursor = 'pointer';
-        el.textContent = p;
-        el.onclick = () => { navigateTo(built); };
+        const el = document.createElement('div'); el.style.cursor='pointer'; el.textContent=p;
+        el.onclick = () => navigateTo(built);
         breadcrumbs.appendChild(el);
       });
     }
 
-    async function fetchRepoTree(path = ""){
-      const cacheKey = path || '/';
-      if(cache[cacheKey]) return cache[cacheKey];
+    async function fetchTree(path=''){
+      const key = path || '/';
+      if(cache[key]) return cache[key];
       try{
-        showLoading(true);
-        const url = `${apiBase}/${path}?ref=${branch}`;
-        const res = await fetch(url);
-        if(!res.ok) throw new Error('Fetch failed');
+        const res = await fetch(`${apiBase}/${path}?ref=${branch}`);
+        if(!res.ok) throw new Error('fetch failed');
         const data = await res.json();
-        cache[cacheKey] = data;
+        cache[key] = data;
         return data;
-      } finally { showLoading(false); }
+      } catch(err){
+        throw err;
+      }
     }
 
-    function clearTree(){ treeRoot.innerHTML = ''; allRows = []; focusedRow = null; }
+    function clear(){
+      treeRoot.innerHTML=''; allRows = []; focused = null;
+    }
 
-    function createFileRow(item){
-      const row = document.createElement('div');
-      row.className = 'tree-row';
-      row.tabIndex = 0;
-      row.dataset.path = item.path;
-      row.dataset.type = item.type;
+    function fileNode(item){
+      const row = document.createElement('div'); row.className='node'; row.tabIndex=0;
+      row.dataset.path = item.path; row.dataset.type = item.type;
       row.innerHTML = `
-        <div class="file-emoji">📄</div>
-        <div style="flex:1">
-          <div style="font-weight:700; color:var(--accent-2)">${item.name}</div>
-          <div class="small muted">${item.path}</div>
+        <div class="icon file">📄</div>
+        <div class="meta">
+          <div class="name">${item.name}</div>
+          <div class="path">${item.path}</div>
         </div>
-        <div class="small"><a class="file-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a></div>
+        <div class="actions">
+          <a class="open-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a>
+        </div>
       `;
+      row.addEventListener('keydown', e=> { if(e.key==='Enter') window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank'); });
       return row;
     }
 
-    function createFolderRow(item){
-      const row = document.createElement('div');
-      row.className = 'tree-row';
-      row.tabIndex = 0;
-      row.dataset.path = item.path;
-      row.dataset.type = item.type;
+    function folderNode(item){
+      const row = document.createElement('div'); row.className='node'; row.tabIndex=0;
+      row.dataset.path = item.path; row.dataset.type = item.type;
       row.innerHTML = `
-        <button class="folder-btn" title="Expand folder">
-          <div class="folder-emoji">📁</div>
-          <div style="flex:1; text-align:left;">
-            <div style="font-weight:800; color:var(--accent)">${item.name}</div>
-            <div class="small muted">${item.path}</div>
-          </div>
-          <div class="small muted">Expand</div>
-        </button>
+        <div class="icon folder">📁</div>
+        <div class="meta">
+          <div class="name">${item.name}</div>
+          <div class="path">${item.path}</div>
+        </div>
+        <div class="actions">
+          <button class="btn-ghost">Expand</button>
+        </div>
       `;
       return row;
     }
 
-    async function buildTree(container, path = ""){
-      try {
-        const items = await fetchRepoTree(path);
-        if(!Array.isArray(items)) throw new Error('Unexpected response');
-        items.sort((a,b) => {
-          if(a.type === b.type) return a.name.localeCompare(b.name);
-          return a.type === 'dir' ? -1 : 1;
-        });
+    async function build(container, path=''){
+      try{
+        const items = await fetchTree(path);
+        if(!Array.isArray(items)) throw new Error('unexpected');
+        items.sort((a,b)=> a.type===b.type ? a.name.localeCompare(b.name) : (a.type==='dir' ? -1:1));
+        if(items.length===0) { container.innerHTML = '<div class="empty">Folder is empty</div>'; return; }
 
-        if(items.length === 0){ container.innerHTML = '<div class="empty">This folder is empty</div>'; return; }
+        for(const it of items){
+          const wrap = document.createElement('div'); wrap.style.marginBottom='8px';
+          if(it.type === 'dir'){
+            const row = folderNode(it);
+            wrap.appendChild(row);
+            const nested = document.createElement('div'); nested.className='nested';
+            wrap.appendChild(nested);
 
-        for(const item of items){
-          const wrapper = document.createElement('div');
-          wrapper.style.marginBottom = '.35rem';
-
-          if(item.type === 'dir'){
-            const row = createFolderRow(item);
-            wrapper.appendChild(row);
-
-            const nested = document.createElement('div');
-            nested.className = 'nested';
-            wrapper.appendChild(nested);
-
-            row.querySelector('.folder-btn').addEventListener('click', async (e) => {
-              e.preventDefault();
-              if(nested.classList.contains('open')){
-                nested.classList.remove('open');
-                row.querySelector('.folder-btn').lastElementChild.textContent = 'Expand';
-              } else {
-                nested.classList.add('open');
-                row.querySelector('.folder-btn').lastElementChild.textContent = 'Collapse';
-                if(!nested.hasChildNodes()){
-                  await buildTree(nested, item.path);
-                }
+            const btn = row.querySelector('.btn-ghost');
+            btn.addEventListener('click', async (ev) => {
+              ev.preventDefault();
+              if(nested.classList.contains('open')){ nested.classList.remove('open'); btn.textContent='Expand'; }
+              else {
+                nested.classList.add('open'); btn.textContent='Collapse';
+                if(!nested.hasChildNodes()) await build(nested, it.path);
               }
             });
 
-            row.addEventListener('keydown', (ev) => {
-              if(ev.key === 'Enter') row.querySelector('.folder-btn').click();
-              if(ev.key === 'ArrowRight') { if(!nested.classList.contains('open')) row.querySelector('.folder-btn').click(); }
-              if(ev.key === 'ArrowLeft') { if(nested.classList.contains('open')) row.querySelector('.folder-btn').click(); }
+            row.addEventListener('keydown', ev=>{
+              if(ev.key==='Enter') btn.click();
+              if(ev.key==='ArrowRight' && !nested.classList.contains('open')) btn.click();
+              if(ev.key==='ArrowLeft' && nested.classList.contains('open')) btn.click();
             });
 
             allRows.push(row);
           } else {
-            const row = createFileRow(item);
-            wrapper.appendChild(row);
-            row.addEventListener('keydown', (ev) => { if(ev.key === 'Enter') window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank'); });
+            const row = fileNode(it);
+            wrap.appendChild(row);
             allRows.push(row);
           }
-
-          container.appendChild(wrapper);
+          container.appendChild(wrap);
         }
       } catch(err){
-        errorEl.style.display = 'block';
+        errorEl.style.display='block';
       }
     }
 
-    async function navigateTo(path){
+    async function navigateTo(path=''){
       currentPath = path || '';
       setBreadcrumb(currentPath);
-      clearTree();
-      emptyEl.style.display = 'none';
-      errorEl.style.display = 'none';
-      await buildTree(treeRoot, currentPath);
-      filterAndShow();
+      clear();
+      emptyEl.style.display='none';
+      errorEl.style.display='none';
+      await build(treeRoot, currentPath);
+      filter();
     }
 
-    function filterAndShow(){
-      const q = (searchInput.value || '').trim().toLowerCase();
+    function filter(){
+      const q = (searchInput.value||'').toLowerCase().trim();
       let visible = 0;
-      allRows.forEach(r => {
-        const title = r.querySelector('div > div')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
-        if(!q || title.includes(q)){
-          r.style.display = '';
-          visible++;
-        } else {
-          r.style.display = 'none';
-        }
+      allRows.forEach(r=>{
+        const txt = r.querySelector('.name')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
+        if(!q || txt.includes(q)){ r.style.display=''; visible++; } else r.style.display='none';
       });
       emptyEl.style.display = visible === 0 ? '' : 'none';
     }
 
-    document.addEventListener('keydown', (e) => {
+    // keyboard navigation and search shortcut
+    document.addEventListener('keydown', e=>{
       if(e.key === '/') { e.preventDefault(); searchInput.focus(); return; }
       if(document.activeElement === searchInput) return;
-      const visibleRows = allRows.filter(r => r.style.display !== 'none');
-      if(visibleRows.length === 0) return;
-      let idx = visibleRows.indexOf(focusedRow);
-      if(e.key === 'ArrowDown') { idx = idx < visibleRows.length - 1 ? idx + 1 : 0; setFocus(visibleRows[idx]); e.preventDefault(); }
-      else if(e.key === 'ArrowUp') { idx = idx > 0 ? idx - 1 : visibleRows.length - 1; setFocus(visibleRows[idx]); e.preventDefault(); }
+      const visible = allRows.filter(r=> r.style.display !== 'none');
+      if(visible.length === 0) return;
+      let idx = visible.indexOf(focused);
+      if(e.key === 'ArrowDown'){ idx = idx < visible.length-1 ? idx+1 : 0; focusRow(visible[idx]); e.preventDefault(); }
+      if(e.key === 'ArrowUp'){ idx = idx > 0 ? idx-1 : visible.length-1; focusRow(visible[idx]); e.preventDefault(); }
     });
 
-    function setFocus(el){ if(focusedRow) focusedRow.classList.remove('focused'); focusedRow = el; if(!focusedRow) return; focusedRow.focus(); }
+    function focusRow(el){ if(!el) return; focused = el; el.focus(); }
 
-    let tId = null;
-    searchInput.addEventListener('input', () => { clearTimeout(tId); tId = setTimeout(filterAndShow, 160); });
+    let debounce = null;
+    searchInput.addEventListener('input', ()=> { clearTimeout(debounce); debounce = setTimeout(filter, 160); });
 
-    function applyTheme(theme){
-      if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
-      else document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('bsds_theme', theme);
-    }
-    themeToggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-      applyTheme(current === 'dark' ? 'light' : 'dark');
+    themeBtn.addEventListener('click', ()=>{
+      const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      if(cur === 'dark') document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme','dark');
     });
-    const savedTheme = localStorage.getItem('bsds_theme') || 'light';
-    applyTheme(savedTheme);
 
+    // initial
     navigateTo('');
   </script>
 </body>
