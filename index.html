@@ -1,240 +1,93 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS_Materials — Minimal File Manager</title>
-
-  <style>
-    :root{
-      --bg-900:#021026;
-      --bg-800:#06243b;
-      --accent:#4fc3f7;
-      --muted:#9fb7cf;
-      --card:rgba(255,255,255,0.02);
-      --radius:10px;
-      --mono:Inter, "Segoe UI", Roboto, system-ui, Arial;
-    }
-
-    /* page */
-    html,body{height:100%;margin:0;font-family:var(--mono);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-    body{
-      background: linear-gradient(180deg,var(--bg-900),var(--bg-800));
-      color:#dbeefb;
-      padding:20px;
-      box-sizing:border-box;
-    }
-
-    /* layout */
-    .wrap{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
-    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    h1{margin:0;font-size:18px;color:#eaf8ff}
-
-    /* panels */
-    .panel{background:var(--card);border-radius:var(--radius);padding:12px;border:1px solid rgba(255,255,255,0.03)}
-    .main{min-height:260px}
-    .sidebar{min-height:260px}
-
-    /* minimal controls */
-    .controls{display:flex;gap:8px;align-items:center}
-    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px}
-    .btn.primary{color:var(--accent);border-color:rgba(79,195,247,0.14)}
-
-    /* folder grid (simple, like your screenshot) */
-    .grid{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-    .tile{width:140px;height:120px;border-radius:10px;background:rgba(255,255,255,0.01);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
-    .tile:hover{background:rgba(79,195,247,0.02)}
-    .tile .ico{font-size:36px;color:var(--accent);margin-bottom:8px}
-    .tile .label{font-weight:600;color:#e8f7ff}
-
-    /* file list simple */
-    .list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-    .row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px}
-    .left{display:flex;gap:10px;align-items:center}
-    .file-ico{width:34px;height:34;border-radius:6px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--accent)}
-    .meta{color:var(--muted);font-size:13px}
-    input[type="search"]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
-
-    /* small */
-    .small{font-size:13px;color:var(--muted)}
-
-    /* light variant */
-    body.light{
-      --bg-900:#f7fafc;--bg-800:#eef6ff;--accent:#0b63b7;--muted:#374151;
-      background: linear-gradient(180deg,#f7fbff,#eef6ff);color:#0b2b3a;
-    }
-
-    @media (max-width:920px){
-      .wrap{grid-template-columns:1fr; padding:12px}
-      .sidebar{order:2}
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BSDS_Materials — File Manager</title>
+<style>
+:root{
+  --bg-dark:#021026; --bg-dark2:#06243b;
+  --fg:#dbeefb; --accent:#4fc3f7; --muted:#9fb7cf;
+}
+body{
+  margin:0; font-family:Segoe UI,Roboto,system-ui;
+  background:linear-gradient(180deg,var(--bg-dark),var(--bg-dark2));
+  color:var(--fg); padding:20px;
+}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+h1{margin:0;font-size:18px;color:#eaf8ff}
+.btn{padding:6px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.btn.primary{color:var(--accent);border-color:rgba(79,195,247,0.3)}
+.wrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.panel{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:12px}
+.grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.tile{width:120px;height:100px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+.tile:hover{background:rgba(79,195,247,0.05)}
+.tile .ico{font-size:32px;color:var(--accent)}
+.tile .label{margin-top:6px;font-weight:600}
+.list{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px}
+.row:hover{background:rgba(255,255,255,0.03)}
+.left{display:flex;gap:8px;align-items:center}
+.ico-sm{width:28px;height:28px;border-radius:4px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.meta{font-size:12px;color:var(--muted)}
+input[type="search"]{width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:inherit}
+.small{font-size:12px;color:var(--muted)}
+body.light{--bg-dark:#f7fafc;--bg-dark2:#eef6ff;--fg:#0b2b3a;--accent:#0b63b7;--muted:#374151;background:linear-gradient(180deg,#f7fbff,#eef6ff)}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>BSDS_Materials</h1>
-        <div class="small">Minimal dark-blue file manager</div>
-      </div>
-
-      <div class="controls">
-        <button id="themeBtn" class="btn">Toggle Theme</button>
-        <a class="btn primary" href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank" rel="noreferrer">GitHub</a>
-      </div>
-    </header>
-
-    <main class="panel main" id="mainPanel">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Top-level folders</strong>
-        <div id="count" class="small">—</div>
-      </div>
-
-      <div id="grid" class="grid" aria-live="polite"></div>
-
-      <div id="filesFallback" class="list" style="display:none"></div>
-    </main>
-
-    <aside class="panel sidebar">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong id="sideTitle">Details</strong>
-        <div id="sidePath" class="small">/</div>
-      </div>
-
-      <div style="margin-top:10px">
-        <input id="search" type="search" placeholder="Filter files" />
-      </div>
-
-      <div id="sideList" style="margin-top:12px" class="list">
-        <div class="small">Select a folder to see contents.</div>
-      </div>
-    </aside>
+<header>
+  <h1>BSDS_Materials</h1>
+  <div>
+    <button id="themeBtn" class="btn">Toggle Theme</button>
+    <a class="btn primary" href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank">GitHub</a>
   </div>
+</header>
 
-  <script>
-    // repo settings
-    const owner = 'Cyclotron123';
-    const repo = 'BSDS_Materials';
-    const branch = 'main';
+<div class="wrap">
+  <main class="panel">
+    <strong>Primary folders</strong>
+    <div id="grid" class="grid"></div>
+  </main>
+  <aside class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong id="sideTitle">Details</strong>
+      <div id="sidePath" class="small">/</div>
+    </div>
+    <div style="margin-top:8px"><input id="search" type="search" placeholder="Filter"/></div>
+    <div id="sideList" class="list" style="margin-top:10px"><div class="small">Select a folder</div></div>
+  </aside>
+</div>
 
-    // DOM
-    const grid = document.getElementById('grid');
-    const count = document.getElementById('count');
-    const sideTitle = document.getElementById('sideTitle');
-    const sidePath = document.getElementById('sidePath');
-    const sideList = document.getElementById('sideList');
-    const search = document.getElementById('search');
-    const themeBtn = document.getElementById('themeBtn');
+<script>
+const owner='Cyclotron123', repo='BSDS_Materials', branch='main';
+const grid=document.getElementById('grid'), sideList=document.getElementById('sideList'),
+      sideTitle=document.getElementById('sideTitle'), sidePath=document.getElementById('sidePath'),
+      search=document.getElementById('search'), themeBtn=document.getElementById('themeBtn');
 
-    // get GitHub contents
-    function api(path=''){ const p = path ? encodeURIComponent(path) : ''; return `https://api.github.com/repos/${owner}/${repo}/contents/${p}?ref=${branch}`; }
+function api(p=''){return `https://api.github.com/repos/${owner}/${repo}/contents/${p}?ref=${branch}`;}
+async function fetchContents(p=''){const r=await fetch(api(p));if(!r.ok)throw new Error(r.status);return r.json();}
+function icon(name,type){if(type==='dir')return '📁';const ext=(name.split('.').pop()||'').toLowerCase();const map={md:'📄',txt:'📄',pdf:'📕',png:'🖼️',jpg:'🖼️',jpeg:'🖼️',py:'🐍',r:'📈',go:'🐹',ipynb:'📓'};return map[ext]||'📄';}
 
-    async function fetchContents(path=''){
-      const r = await fetch(api(path), { headers:{ Accept:'application/vnd.github.v3+json' }});
-      if(!r.ok) throw new Error('GitHub API ' + r.status);
-      return r.json();
-    }
+async function loadRoot(){
+  grid.innerHTML='loading…';
+  try{const items=await fetchContents('');const dirs=items.filter(i=>i.type==='dir');grid.innerHTML='';dirs.forEach(d=>{const t=document.createElement('div');t.className='tile';t.innerHTML=`<div class="ico">📁</div><div class="label">${d.name}</div>`;t.onclick=()=>openFolder(d.path);grid.appendChild(t);});}
+  catch(e){grid.innerHTML='<div class="small">Error loading</div>';}
+}
 
-    function extIcon(name){
-      const ext = (name.split('.').pop()||'').toLowerCase();
-      const map = { md:'📄', txt:'📄', pdf:'📕', png:'🖼️', jpg:'🖼️', jpeg:'🖼️', py:'🐍', r:'📈', go:'🐹', ipynb:'📓' };
-      return map[ext] || '📄';
-    }
+async function openFolder(path){
+  sideTitle.textContent=path.split('/').pop()||'/';sidePath.textContent='/'+path;sideList.innerHTML='loading…';
+  try{const items=await fetchContents(path);items.sort((a,b)=>a.type===b.type?a.name.localeCompare(b.name):(a.type==='dir'?-1:1));
+    sideList.innerHTML='';items.forEach(it=>{const r=document.createElement('div');r.className='row';r.innerHTML=`<div class="left"><div class="ico-sm">${icon(it.name,it.type)}</div><div><div>${it.name}</div><div class="meta">${it.type}</div></div></div><div></div>`;
+      const ctrl=r.querySelector('div:last-child');if(it.type==='dir'){const b=document.createElement('button');b.className='btn';b.textContent='Open';b.onclick=()=>openFolder(it.path);ctrl.appendChild(b);}else{const v=document.createElement('a');v.className='btn';v.textContent='View';v.href=it.html_url;v.target='_blank';ctrl.appendChild(v);}sideList.appendChild(r);});}
+  catch(e){sideList.innerHTML='<div class="small">Error</div>';}
+}
 
-    function mkTile(name, path){
-      const t = document.createElement('div');
-      t.className = 'tile';
-      t.innerHTML = `<div class="ico">📁</div><div class="label">${name}</div>`;
-      t.onclick = ()=> openFolder(path);
-      return t;
-    }
-
-    function mkFileRow(item){
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.innerHTML = `<div class="left"><div class="file-ico">${extIcon(item.name)}</div>
-        <div><div class="name">${item.name}</div><div class="meta">${item.type} ${item.size?('• '+Math.round(item.size/1024)+' KB'):''}</div></div></div>
-        <div></div>`;
-      const actionWrap = row.querySelector('div:last-child');
-      if(item.type === 'file'){
-        const view = document.createElement('a'); view.className='btn'; view.textContent='View'; view.href=item.html_url; view.target='_blank'; view.rel='noreferrer';
-        const raw = document.createElement('a'); raw.className='btn'; raw.textContent='Raw'; raw.href=item.download_url || item.html_url.replace('/blob/','/raw/'); raw.target='_blank'; raw.rel='noreferrer';
-        actionWrap.appendChild(view); actionWrap.appendChild(raw);
-      } else {
-        const open = document.createElement('button'); open.className='btn'; open.textContent='Open'; open.onclick = ()=> openFolder(item.path);
-        actionWrap.appendChild(open);
-      }
-      return row;
-    }
-
-    // load top-level folders visually
-    async function loadTop(){
-      grid.innerHTML = 'loading…';
-      try{
-        const items = await fetchContents('');
-        const dirs = items.filter(i=> i.type === 'dir');
-        grid.innerHTML = '';
-        count.textContent = dirs.length + ' folders';
-        if(dirs.length === 0){
-          grid.innerHTML = '<div class="small">No folders</div>';
-          return;
-        }
-        dirs.forEach(d => grid.appendChild(mkTile(d.name, d.path)));
-      }catch(err){
-        grid.innerHTML = '<div class="small">Unable to load</div>';
-        console.error(err);
-      }
-    }
-
-    // open folder -> populate sidebar
-    async function openFolder(path){
-      sideTitle.textContent = path.split('/').pop() || '/';
-      sidePath.textContent = '/' + path;
-      sideList.innerHTML = 'loading…';
-      try{
-        const items = await fetchContents(path);
-        items.sort((a,b)=> a.type === b.type ? a.name.localeCompare(b.name) : (a.type==='dir'?-1:1));
-        sideList.innerHTML = '';
-        items.forEach(it => sideList.appendChild(mkFileRow(it)));
-      }catch(err){
-        sideList.innerHTML = '<div class="small">Unable to load</div>';
-        console.error(err);
-      }
-    }
-
-    // search filter
-    search.addEventListener('input', ()=>{
-      const q = search.value.trim().toLowerCase();
-      const rows = sideList.querySelectorAll('.row');
-      rows.forEach(r=>{
-        const name = r.querySelector('.name')?.textContent?.toLowerCase() || '';
-        r.style.display = name.includes(q) ? '' : 'none';
-      });
-    });
-
-    // theme toggle persisted
-    (function(){
-      const key = 'bsds_minimal_dark';
-      const saved = localStorage.getItem(key);
-      const dark = saved === null ? true : saved === 'true';
-      document.body.classList.toggle('light', !dark);
-      themeBtn.addEventListener('click', ()=>{
-        const nowDark = !(localStorage.getItem(key) === 'true');
-        localStorage.setItem(key, nowDark.toString());
-        document.body.classList.toggle('light', !nowDark);
-      });
-    })();
-
-    // init
-    loadTop();
-    if(location.hash) {
-      const p = decodeURIComponent(location.hash.slice(1));
-      if(p) openFolder(p);
-    }
-    window.addEventListener('hashchange', ()=> {
-      const p = decodeURIComponent(location.hash.slice(1));
-      if(p) openFolder(p);
-    });
-  </script>
+search.addEventListener('input',()=>{const q=search.value.toLowerCase();sideList.querySelectorAll('.row').forEach(r=>{const n=r.querySelector('div div').textContent.toLowerCase();r.style.display=n.includes(q)?'':'none';});});
+(function(){const key='themeDark';const saved=localStorage.getItem(key);if(saved==='false')document.body.classList.add('light');themeBtn.onclick=()=>{document.body.classList.toggle('light');localStorage.setItem(key,!document.body.classList.contains('light'));};})();
+loadRoot();
+</script>
 </body>
 </html>
