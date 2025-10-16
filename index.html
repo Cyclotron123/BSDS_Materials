@@ -1,66 +1,481 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>BSDS Materials</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    body { padding: 2rem; background: #f9f9f9; }
-    h1 { margin-bottom: 1rem; }
-    .folder { font-weight: bold; cursor: pointer; }
-    .nested { display: none; margin-left: 1rem; }
-    .active { display: block; }
-    .file-link { text-decoration: none; color: #007bff; }
-    .file-link:hover { text-decoration: underline; }
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --muted:#6c757d;
+      --accent:#2563eb;
+      --folder:#fef3c7;
+      --file:#eef2ff;
+      --radius:12px;
+      --shadow: 0 6px 18px rgba(21,30,50,0.06);
+    }
+    [data-theme="dark"]{
+      --bg:#0b1220;
+      --card:#0f1724;
+      --muted:#9aa4b2;
+      --accent:#60a5fa;
+      --folder:#4b5563;
+      --file:#1f2937;
+      --shadow: none;
+      color: #e6eef7;
+    }
+
+    html,body{height:100%}
+    body{
+      background: linear-gradient(180deg, var(--bg), #ffffff00 40%);
+      padding:2rem;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      transition: background .25s ease;
+    }
+
+    .app {
+      max-width:1000px;
+      margin:0 auto;
+    }
+
+    .header {
+      display:flex;
+      gap:1rem;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:1rem;
+    }
+
+    .title {
+      display:flex;
+      gap:.75rem;
+      align-items:center;
+    }
+
+    .logo {
+      width:56px;
+      height:56px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      font-weight:700;
+      color:var(--accent);
+      background:linear-gradient(135deg,#dbeafe,#eef2ff);
+      box-shadow:var(--shadow);
+    }
+
+    .controls {
+      display:flex;
+      gap:.5rem;
+      align-items:center;
+    }
+
+    .search {
+      flex:1;
+      min-width:220px;
+    }
+
+    .panel {
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+      overflow:hidden;
+    }
+
+    .tree-row {
+      display:flex;
+      align-items:center;
+      gap:.6rem;
+      padding:.45rem .6rem;
+      border-radius:10px;
+      transition:background .12s ease, transform .12s ease;
+      cursor:default;
+    }
+
+    .tree-row:hover { background: rgba(37,99,235,0.06); transform:translateY(-1px); }
+
+    .folder-btn {
+      display:flex;
+      align-items:center;
+      gap:.6rem;
+      flex:1;
+      background:transparent;
+      border:0;
+      padding:0;
+      font-weight:600;
+      color:var(--muted);
+      text-align:left;
+    }
+
+    .folder-emoji {
+      width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
+      background:var(--folder); color:#7c5a00; font-weight:700;
+    }
+
+    .file-emoji {
+      width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
+      background:var(--file); color:#1e3a8a; font-weight:700;
+    }
+
+    .nested {
+      padding-left:1.2rem;
+      border-left:1px dashed rgba(99,102,241,0.06);
+      margin-left:.6rem;
+      overflow:hidden;
+      transition:max-height .24s cubic-bezier(.2,.9,.2,1),opacity .18s ease;
+      max-height:0;
+      opacity:0;
+    }
+
+    .nested.open {
+      max-height:1200px;
+      opacity:1;
+    }
+
+    .small {
+      font-size:.85rem;
+      color:var(--muted);
+    }
+
+    .breadcrumb {
+      gap:.5rem;
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .kbd {
+      background:#eef2ff;
+      padding:.15rem .4rem;
+      border-radius:6px;
+      font-size:.78rem;
+      color:var(--accent);
+      border:1px solid rgba(37,99,235,0.08);
+    }
+
+    .empty {
+      text-align:center;
+      padding:2rem;
+      color:var(--muted);
+    }
+
+    .spinner {
+      width:26px;height:26px;border-radius:50%;
+      border:3px solid rgba(0,0,0,0.06);
+      border-top-color:var(--accent);
+      animation:spin .8s linear infinite;
+    }
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .error { color:#b91c1c; font-weight:600; }
+
+    .file-link { color:var(--accent); text-decoration:none; font-weight:600; }
+    .file-link:hover { text-decoration:underline; }
+
+    .muted { color:var(--muted); }
+
+    @media (max-width:720px){
+      .header { flex-direction:column; align-items:stretch; gap:.6rem; }
+      .controls { justify-content:space-between; width:100%;}
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📚 BSDS Materials</h1>
-    <p>All notes and documents organized by folder. Click to expand folders and access files.</p>
-    <div id="file-tree"></div>
+  <div class="app">
+    <div class="header">
+      <div class="title">
+        <div class="logo">BS</div>
+        <div>
+          <h3 class="mb-0">BSDS Materials</h3>
+          <div class="small muted">Organized notes and documents with quick search and keyboard navigation</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input id="search" class="form-control search" placeholder="Search files or folders. Press / to focus" />
+        <div class="d-flex gap-2 align-items-center">
+          <button id="themeToggle" class="btn btn-outline-secondary btn-sm" title="Toggle theme">Toggle theme</button>
+          <div id="loading" style="display:none" class="spinner" title="Loading"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="breadcrumb" id="breadcrumbs">
+          <div class="small muted">Home</div>
+        </div>
+        <div class="small muted">Use arrow keys to navigate • <span class="kbd">Enter</span> to open</div>
+      </div>
+
+      <div id="file-tree" class="d-grid gap-1"></div>
+
+      <div id="empty" class="empty mt-3" style="display:none">
+        No results found.
+      </div>
+
+      <div id="error" class="mt-3" style="display:none">
+        <div class="error">Failed to load repository. Please check repository name, branch, or network and try again.</div>
+      </div>
+    </div>
   </div>
 
   <script>
     const repo = "Cyclotron123/BSDS_Materials";
     const branch = "main";
+    const apiBase = `https://api.github.com/repos/${repo}/contents`;
+    const treeRoot = document.getElementById('file-tree');
+    const searchInput = document.getElementById('search');
+    const loading = document.getElementById('loading');
+    const emptyEl = document.getElementById('empty');
+    const errorEl = document.getElementById('error');
+    const breadcrumbs = document.getElementById('breadcrumbs');
+    const themeToggle = document.getElementById('themeToggle');
 
-    async function fetchRepoTree(path = "") {
-      const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
-      const res = await fetch(apiUrl);
-      return res.json();
+    let cache = {};
+    let focusedRow = null;
+    let currentPath = "";
+    let allRows = [];
+
+    function showLoading(show){
+      loading.style.display = show ? 'inline-block' : 'none';
     }
 
-    async function buildTree(container, path = "") {
-      const items = await fetchRepoTree(path);
-      items.sort((a, b) => a.type.localeCompare(b.type)); // folders first
+    function setBreadcrumb(path){
+      breadcrumbs.innerHTML = '';
+      const parts = path ? path.split('/') : [];
+      const home = document.createElement('div');
+      home.className = 'small muted';
+      home.textContent = 'Home';
+      home.style.cursor = 'pointer';
+      home.onclick = () => { navigateTo(''); };
+      breadcrumbs.appendChild(home);
 
-      for (const item of items) {
-        const div = document.createElement("div");
+      let built = '';
+      parts.forEach((p, i) => {
+        built = built ? built + '/' + p : p;
+        const sep = document.createElement('div');
+        sep.className = 'small muted';
+        sep.textContent = '›';
+        breadcrumbs.appendChild(sep);
+        const el = document.createElement('div');
+        el.className = 'small';
+        el.style.cursor = 'pointer';
+        el.textContent = p;
+        el.onclick = () => { navigateTo(built); };
+        breadcrumbs.appendChild(el);
+      });
+    }
 
-        if (item.type === "dir") {
-          div.innerHTML = `<div class="folder">📁 ${item.name}</div>`;
-          const nested = document.createElement("div");
-          nested.classList.add("nested");
-          div.appendChild(nested);
-
-          div.querySelector(".folder").addEventListener("click", () => {
-            nested.classList.toggle("active");
-            if (!nested.hasChildNodes()) {
-              buildTree(nested, item.path);
-            }
-          });
-        } else {
-          const fileUrl = `https://github.com/${repo}/blob/${branch}/${item.path}`;
-          div.innerHTML = `<div>📄 <a class="file-link" href="${fileUrl}" target="_blank">${item.name}</a></div>`;
-        }
-
-        container.appendChild(div);
+    async function fetchRepoTree(path = ""){
+      const cacheKey = path || '/';
+      if(cache[cacheKey]) return cache[cacheKey];
+      try{
+        showLoading(true);
+        const url = `${apiBase}/${path}?ref=${branch}`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('Fetch failed');
+        const data = await res.json();
+        cache[cacheKey] = data;
+        return data;
+      } finally {
+        showLoading(false);
       }
     }
 
-    buildTree(document.getElementById("file-tree"));
+    function clearTree(){
+      treeRoot.innerHTML = '';
+      allRows = [];
+      focusedRow = null;
+    }
+
+    function createFileRow(item){
+      const row = document.createElement('div');
+      row.className = 'tree-row';
+      row.tabIndex = 0;
+      row.dataset.path = item.path;
+      row.dataset.type = item.type;
+      row.innerHTML = `
+        <div class="file-emoji">📄</div>
+        <div style="flex:1">
+          <div style="font-weight:600">${item.name}</div>
+          <div class="small muted">${item.path}</div>
+        </div>
+        <div class="small"><a class="file-link" href="https://github.com/${repo}/blob/${branch}/${item.path}" target="_blank">Open</a></div>
+      `;
+      return row;
+    }
+
+    function createFolderRow(item){
+      const row = document.createElement('div');
+      row.className = 'tree-row';
+      row.tabIndex = 0;
+      row.dataset.path = item.path;
+      row.dataset.type = item.type;
+      row.innerHTML = `
+        <button class="folder-btn" title="Expand folder">
+          <div class="folder-emoji">📁</div>
+          <div style="flex:1; text-align:left;">
+            <div style="font-weight:700; color:var(--muted)">${item.name}</div>
+            <div class="small muted">${item.path}</div>
+          </div>
+          <div class="small muted">Expand</div>
+        </button>
+      `;
+      return row;
+    }
+
+    async function buildTree(container, path = ""){
+      try {
+        const items = await fetchRepoTree(path);
+        if(!Array.isArray(items)) {
+          throw new Error('Unexpected response');
+        }
+        items.sort((a,b) => {
+          if(a.type === b.type) return a.name.localeCompare(b.name);
+          return a.type === 'dir' ? -1 : 1;
+        });
+
+        if(items.length === 0){
+          container.innerHTML = '<div class="empty">This folder is empty</div>';
+          return;
+        }
+
+        for(const item of items){
+          const wrapper = document.createElement('div');
+          wrapper.style.marginBottom = '.25rem';
+
+          if(item.type === 'dir'){
+            const row = createFolderRow(item);
+            wrapper.appendChild(row);
+
+            const nested = document.createElement('div');
+            nested.className = 'nested';
+            wrapper.appendChild(nested);
+
+            row.querySelector('.folder-btn').addEventListener('click', async (e) => {
+              e.preventDefault();
+              if(nested.classList.contains('open')){
+                nested.classList.remove('open');
+                row.querySelector('.folder-btn').lastElementChild.textContent = 'Expand';
+              } else {
+                nested.classList.add('open');
+                row.querySelector('.folder-btn').lastElementChild.textContent = 'Collapse';
+                if(!nested.hasChildNodes()){
+                  await buildTree(nested, item.path);
+                }
+              }
+            });
+
+            row.addEventListener('keydown', (ev) => {
+              if(ev.key === 'Enter') row.querySelector('.folder-btn').click();
+              if(ev.key === 'ArrowRight') {
+                if(!nested.classList.contains('open')) row.querySelector('.folder-btn').click();
+              }
+              if(ev.key === 'ArrowLeft') {
+                if(nested.classList.contains('open')) row.querySelector('.folder-btn').click();
+              }
+            });
+
+            allRows.push(row);
+          } else {
+            const row = createFileRow(item);
+            wrapper.appendChild(row);
+            row.addEventListener('keydown', (ev) => {
+              if(ev.key === 'Enter') {
+                window.open(`https://github.com/${repo}/blob/${branch}/${item.path}`, '_blank');
+              }
+            });
+            allRows.push(row);
+          }
+
+          container.appendChild(wrapper);
+        }
+      } catch(err){
+        errorEl.style.display = 'block';
+      }
+    }
+
+    async function navigateTo(path){
+      currentPath = path || '';
+      setBreadcrumb(currentPath);
+      clearTree();
+      emptyEl.style.display = 'none';
+      errorEl.style.display = 'none';
+      await buildTree(treeRoot, currentPath);
+      filterAndShow();
+    }
+
+    function filterAndShow(){
+      const q = (searchInput.value || '').trim().toLowerCase();
+      let visible = 0;
+      allRows.forEach(r => {
+        const name = r.querySelector('div > div')?.textContent?.toLowerCase() || r.dataset.path.toLowerCase();
+        if(!q || name.includes(q)){
+          r.style.display = '';
+          visible++;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+      emptyEl.style.display = visible === 0 ? '' : 'none';
+    }
+
+    // keyboard focus navigation
+    document.addEventListener('keydown', (e) => {
+      if(e.key === '/') {
+        e.preventDefault();
+        searchInput.focus();
+        return;
+      }
+      if(document.activeElement === searchInput) return;
+      const visibleRows = allRows.filter(r => r.style.display !== 'none');
+      if(visibleRows.length === 0) return;
+      let idx = visibleRows.indexOf(focusedRow);
+      if(e.key === 'ArrowDown') {
+        idx = idx < visibleRows.length - 1 ? idx + 1 : 0;
+        setFocus(visibleRows[idx]);
+        e.preventDefault();
+      } else if(e.key === 'ArrowUp') {
+        idx = idx > 0 ? idx - 1 : visibleRows.length - 1;
+        setFocus(visibleRows[idx]);
+        e.preventDefault();
+      }
+    });
+
+    function setFocus(el){
+      if(focusedRow) focusedRow.classList.remove('focused');
+      focusedRow = el;
+      if(!focusedRow) return;
+      focusedRow.focus();
+    }
+
+    // search debounce
+    let tId = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(tId);
+      tId = setTimeout(filterAndShow, 180);
+    });
+
+    // theme toggle with persistence (localStorage)
+    function applyTheme(theme){
+      if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
+      else document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('bsds_theme', theme);
+    }
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+    const savedTheme = localStorage.getItem('bsds_theme') || 'light';
+    applyTheme(savedTheme);
+
+    // initial load
+    navigateTo('');
   </script>
 </body>
 </html>
