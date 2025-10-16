@@ -3,12 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS Materials — Copilot Style</title>
+  <title>BSDS Materials — Dark Blue</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    /* Core tokens */
+    /* Dark blue theme tokens */
     :root{
-      --bg-1: linear-gradient(180deg,#f7fbff 0%, #fff7ff 100%);
+      --bg: linear-gradient(180deg,#071020 0%, #081428 100%);
+      --card: linear-gradient(180deg,#071728, #0a2133);
+      --muted: #9fb4d6;
+      --accent: #38bdf8;        /* sky blue */
+      --accent-2: #60a5fa;      /* lighter blue */
+      --accent-3: #7dd3fc;      /* highlight */
+      --folder: linear-gradient(180deg,#0f2a3a,#0c2432);
+      --file: linear-gradient(180deg,#07293c,#043040);
+      --radius: 14px;
+      --shadow: 0 12px 30px rgba(2,6,23,0.6);
+      --glass: rgba(255,255,255,0.03);
+      --border-weak: rgba(255,255,255,0.04);
+    }
+
+    /* light variant used when toggled */
+    [data-theme="light"]{
+      --bg: linear-gradient(180deg,#f7fbff 0%, #fff7ff 100%);
       --card:#ffffff;
       --muted:#51607a;
       --accent:#0ea5a4;
@@ -17,21 +33,10 @@
       --folder:#fff4e6;
       --file:#e8f9ff;
       --radius:14px;
+      --shadow: 0 12px 30px rgba(20,30,60,0.08);
       --glass: rgba(255,255,255,0.6);
-      --shadow-lg: 0 12px 30px rgba(20,30,60,0.08);
-      --shadow-sm: 0 6px 18px rgba(20,30,60,0.06);
-    }
-    [data-theme="dark"]{
-      --bg-1: linear-gradient(180deg,#071528 0%, #061022 100%);
-      --card:linear-gradient(180deg,#071827,#041422);
-      --muted:#9fb4d6;
-      --accent:#20c997;
-      --accent-2:#8b5cf6;
-      --accent-3:#ff7b7b;
-      --folder:#2b1f0f;
-      --file:#082933;
-      --shadow-lg: none;
-      color:#e6eef7;
+      --border-weak: rgba(0,0,0,0.06);
+      color: inherit;
     }
 
     html,body{height:100%}
@@ -39,7 +44,8 @@
       margin:0;
       padding:28px;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: var(--bg-1);
+      background: var(--bg);
+      color: #e6eef7;
       transition: background .25s ease, color .25s ease;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
@@ -51,70 +57,92 @@
     .header {
       display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
     }
-    .brand {
-      display:flex; gap:12px; align-items:center;
-    }
+    .brand { display:flex; gap:12px; align-items:center; }
     .logo {
-      width:64px; height:64px; border-radius:12px; display:grid; place-items:center; color:#fff;
-      background: linear-gradient(135deg,var(--accent),var(--accent-2));
-      font-weight:800; font-size:20px; box-shadow:var(--shadow-lg);
+      width:64px; height:64px; border-radius:12px; display:grid; place-items:center; color:#042639;
+      background: linear-gradient(135deg,var(--accent-2),var(--accent));
+      font-weight:800; font-size:20px; box-shadow:var(--shadow);
+      color: #021826;
     }
-    .title h1{ margin:0; font-size:20px; letter-spacing:-0.2px; }
+    .title h1{ margin:0; font-size:20px; letter-spacing:-0.2px; color: #e6f6ff; }
     .title .subtitle{ font-size:13px; color:var(--muted); margin-top:4px; }
 
     /* Controls */
     .controls { display:flex; gap:10px; align-items:center; }
-    .search { min-width:320px; max-width:42vw; }
+    .search {
+      min-width:320px; max-width:42vw;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border-weak); color: #e6f6ff;
+      border-radius:10px; padding:.45rem .75rem;
+    }
+    .search::placeholder { color: rgba(230,246,255,0.45); }
+
     .btn-ghost {
-      border:1px solid rgba(0,0,0,0.06);
-      background: linear-gradient(180deg,#ffffff, #fbfbff);
+      border:1px solid var(--border-weak);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       padding:.45rem .7rem; border-radius:10px; cursor:pointer; color:var(--muted);
       display:inline-flex; gap:.5rem; align-items:center;
-      box-shadow:var(--shadow-sm);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.45);
     }
     .btn-primary {
       background: linear-gradient(90deg,var(--accent),var(--accent-2));
-      color:#fff; border:0; padding:.45rem .85rem; border-radius:10px; cursor:pointer;
-      box-shadow:0 8px 24px rgba(124,58,237,0.12);
-      font-weight:600;
+      color:#042639; border:0; padding:.45rem .85rem; border-radius:10px; cursor:pointer;
+      box-shadow:0 8px 24px rgba(8,32,48,0.5);
+      font-weight:700;
     }
 
     /* Panel */
     .panel {
-      background:var(--card); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow-lg);
-      border: 1px solid rgba(124,58,237,0.03);
+      background: var(--card); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow);
+      border: 1px solid var(--border-weak);
+      color: #e6eef7;
     }
 
     .toolbar {
       display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;
     }
     .breadcrumb { display:flex; gap:8px; align-items:center; color:var(--muted); font-size:13px; flex-wrap:wrap; }
-    .kbd { background:linear-gradient(180deg,#f1f8f7,#ffffff); padding:.12rem .36rem; border-radius:8px; font-size:.78rem; color:var(--accent); border:1px solid rgba(14,165,233,0.06); }
+    .kbd { background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:.12rem .36rem; border-radius:8px; font-size:.78rem; color:var(--accent); border:1px solid var(--border-weak); }
 
     /* File tree */
     .tree { display:flex; flex-direction:column; gap:8px; }
     .node {
-      display:flex; align-items:center; gap:12px; padding:10px; border-radius:12px;
+      display:flex; align-items:center; gap:12px; padding:12px; border-radius:12px;
       transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border: 1px solid rgba(255,255,255,0.02);
     }
-    .node:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(14,20,40,0.06); background: linear-gradient(90deg, rgba(14,165,233,0.03), rgba(124,58,237,0.02)); }
+    .node:hover { transform:translateY(-4px); box-shadow:0 18px 40px rgba(2,6,23,0.6); background: linear-gradient(90deg, rgba(56,189,248,0.03), rgba(96,165,250,0.02)); }
+
     .icon {
       width:52px; height:52px; border-radius:10px; display:grid; place-items:center; font-weight:800;
+      color: #022b3a;
+    }
+    .icon.folder {
+      background: linear-gradient(180deg,#072b40,#053043);
+      color: var(--accent-3);
+      box-shadow: 0 8px 24px rgba(6,37,56,0.6);
+    }
+    .icon.file {
+      background: linear-gradient(180deg,#062a3a,#042532);
+      color: var(--accent-2);
+      box-shadow: 0 8px 24px rgba(3,28,44,0.6);
     }
 
-    .icon.folder { background: linear-gradient(180deg,#fff4e6,#ffd9b3); color:#b45309; box-shadow:0 6px 18px rgba(234,88,12,0.12); }
-    .icon.file { background: linear-gradient(180deg,#e8f9ff,#cfeeff); color:#065f46; box-shadow:0 6px 18px rgba(6,182,212,0.06); }
-
     .meta { flex:1; min-width:0; }
-    .meta .name { font-weight:700; color:var(--muted); font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .meta .path { font-size:12px; color:var(--muted); margin-top:4px; opacity:0.9; }
+    .meta .name { font-weight:700; color:#e8f8ff; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .meta .path { font-size:12px; color:var(--muted); margin-top:4px; opacity:0.95; }
 
     .actions { display:flex; gap:8px; align-items:center; }
-    .open-link { color:var(--accent-2); font-weight:700; text-decoration:none; padding:.36rem .6rem; border-radius:10px; border:1px solid rgba(124,58,237,0.06); background:linear-gradient(180deg,#fff,#fbf8ff); }
-    .open-link:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(124,58,237,0.06); }
+    .open-link {
+      color:#002034;
+      background: linear-gradient(90deg,var(--accent-3),var(--accent));
+      font-weight:700; text-decoration:none; padding:.36rem .6rem; border-radius:10px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .open-link:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(8,32,48,0.45); }
 
     .nested {
-      margin-left:64px; margin-top:8px; border-left:2px dashed rgba(124,58,237,0.06); padding-left:16px;
+      margin-left:64px; margin-top:8px; border-left:2px dashed rgba(96,165,250,0.06); padding-left:16px;
       overflow:hidden; transition: max-height .28s cubic-bezier(.2,.9,.2,1), opacity .18s ease;
       max-height:0; opacity:0;
     }
@@ -122,28 +150,31 @@
 
     .empty { padding:28px; text-align:center; color:var(--muted); font-weight:600; }
 
-    /* Responsive */
+    /* Small responsive tweaks */
     @media (max-width:900px){
       .search { min-width:unset; width:100%; }
       .controls { flex:1; }
       .header { flex-direction:column; align-items:flex-start; gap:10px; }
     }
+
+    /* accessibility focus */
+    .node:focus, .tree-row:focus { outline: 2px solid rgba(56,189,248,0.18); outline-offset: 4px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="header">
       <div class="brand">
-        <div class="logo">CP</div>
+        <div class="logo">BS</div>
         <div class="title">
           <h1>BSDS Materials</h1>
-          <div class="subtitle">BSDS — search, keyboard nav, and quick open</div>
+          <div class="subtitle">Dark blue themed file browser — search, keyboard nav, quick open</div>
         </div>
       </div>
 
       <div class="controls">
         <input id="search" class="form-control search" placeholder="Search files or folders. Press / to focus" />
-        <button id="newTheme" class="btn-primary">Toggle Theme</button>
+        <button id="themeToggle" class="btn-primary">Toggle Light</button>
       </div>
     </div>
 
@@ -156,7 +187,7 @@
       <div id="file-tree" class="tree"></div>
 
       <div id="empty" class="empty" style="display:none">No results found</div>
-      <div id="error" class="empty" style="display:none;color:#ff4d4f">Could not load repository</div>
+      <div id="error" class="empty" style="display:none;color:#ff6b6b">Could not load repository</div>
     </div>
   </div>
 
@@ -169,7 +200,7 @@
     const emptyEl = document.getElementById('empty');
     const errorEl = document.getElementById('error');
     const breadcrumbs = document.getElementById('breadcrumbs');
-    const themeBtn = document.getElementById('newTheme');
+    const themeBtn = document.getElementById('themeToggle');
 
     let cache = {};
     let allRows = [];
@@ -324,13 +355,19 @@
     let debounce = null;
     searchInput.addEventListener('input', ()=> { clearTimeout(debounce); debounce = setTimeout(filter, 160); });
 
+    // theme toggle: default to dark-blue theme (no data-theme), toggle to light variant
     themeBtn.addEventListener('click', ()=>{
-      const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-      if(cur === 'dark') document.documentElement.removeAttribute('data-theme');
-      else document.documentElement.setAttribute('data-theme','dark');
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      if(isLight){
+        document.documentElement.removeAttribute('data-theme');
+        themeBtn.textContent = 'Toggle Light';
+      } else {
+        document.documentElement.setAttribute('data-theme','light');
+        themeBtn.textContent = 'Toggle Dark';
+      }
     });
 
-    // initial
+    // initial load
     navigateTo('');
   </script>
 </body>
