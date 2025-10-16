@@ -1,86 +1,458 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Repo Navigator</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-  <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root {
-      --background: 215 28% 14%;
-      --foreground: 211 41% 74%;
-      --card: 215 28% 17%;
-      --card-foreground: 211 41% 74%;
-      --primary: 174 45% 51%;
-      --primary-foreground: 215 28% 10%;
-      --accent: 215 28% 25%;
-      --accent-foreground: 211 41% 85%;
-      --border: 215 28% 25%;
-    }
-    body {
-      background-color: hsl(var(--background));
-      color: hsl(var(--foreground));
-      font-family: 'PT Sans', sans-serif;
-    }
-    .container {
-      max-width: 1400px;
-    }
-    .card {
-      background-color: hsl(var(--card));
-      color: hsl(var(--card-foreground));
-      border: 1px solid hsl(var(--border));
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    }
-    .card-header {
-      padding: 1.5rem;
-    }
-    .card-content {
-      padding: 1.5rem;
-      padding-top: 0;
-    }
-    .text-primary {
-      color: hsl(var(--primary));
-    }
-    .bg-accent {
-      background-color: hsl(var(--accent));
-    }
-    .text-accent-foreground {
-       color: hsl(var(--accent-foreground));
-    }
-    .text-muted-foreground {
-      color: hsl(211 41% 60%);
-    }
-    .hover\:underline:hover {
-      text-decoration: underline;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Repo Browser</title>
+    <style>
+        /* --- Configuration & Deployment Comments ---
+         *
+         * How to change the repository:
+         *   - In the <script> section below, find the constants REPO_OWNER, REPO_NAME, and REPO_BRANCH.
+         *   - Change their values to match the target repository you want to display.
+         *
+         * How to deploy to GitHub Pages:
+         *   1. Push this `index.html` file to a GitHub repository.
+         *   2. In your repository's settings, go to the "Pages" section.
+         *   3. Under "Build and deployment", select "Deploy from a branch" as the source.
+         *   4. Choose the branch where you pushed this file (e.g., `main` or `gh-pages`).
+         *   5. Select the `/(root)` folder and click "Save".
+         *   6. Your site will be live at `https://<your-username>.github.io/<repository-name>/` in a few minutes.
+         *
+         * --- End of Comments ---
+        */
+
+        :root {
+            --bg-color: #1A202C; /* Deep Navy Blue */
+            --text-color: #E2E8F0; /* Light Grayish White */
+            --primary-color: #A0B9D6; /* Soft Blue */
+            --accent-color: #4DB6AC; /* Teal */
+            --border-color: #2D3748;
+            --card-bg: #2D3748;
+            --link-hover: #4fd1c5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        header p {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 2rem;
+        }
+        header p a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        header p a:hover {
+            text-decoration: underline;
+        }
+
+        #breadcrumbs {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        #breadcrumbs a {
+            color: var(--accent-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+
+        #file-list {
+            list-style: none;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #file-list li {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+        
+        #file-list li:last-child {
+            border-bottom: none;
+        }
+
+        #file-list li a, #file-list li span {
+            color: var(--text-color);
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        #file-list li:hover {
+            background-color: #3f4a5f;
+        }
+        
+        #file-list li a:focus, #file-list li span:focus {
+            outline: 2px solid var(--accent-color);
+            outline-offset: -2px;
+            border-radius: 4px;
+        }
+        
+        .icon {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        #preview-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        #preview-content {
+            background-color: var(--card-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        #preview-filename {
+            font-weight: bold;
+            color: var(--primary-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        #close-preview {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        #preview-text {
+            flex-grow: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                margin: 1rem auto;
+            }
+        }
+    </style>
 </head>
-<body class="dark">
-  <main class="container mx-auto px-4 py-8 md:py-12">
-    <header class="mb-8">
-      <h1 class="text-4xl font-bold text-primary md:text-5xl">Repo Navigator</h1>
-      <p class="text-muted-foreground mt-2">
-        Browsing the <a href="https://github.com/Cyclotron123/BSDS_Materials" target="_blank" rel="noopener noreferrer" class="font-mono bg-accent px-1.5 py-1 rounded-md text-accent-foreground hover:underline">Cyclotron123/BSDS_Materials</a> repository.
-      </p>
-    </header>
-    <div class="card">
-      <div class="card-header">
-        <nav aria-label="Breadcrumb">
-          <ol class="flex items-center space-x-1 md:space-x-2 text-sm text-muted-foreground">
-            <li>
-              <span class="text-foreground font-medium">Home</span>
-            </li>
-          </ol>
-        </nav>
-      </div>
-      <div class="card-content">
-        <p class="text-muted-foreground">This directory is empty. (Note: Content is dynamically loaded in the Next.js app)</p>
-      </div>
+<body>
+
+    <main>
+        <header>
+            <h1 id="repo-title">GitHub File Browser</h1>
+            <p>Browsing <a id="repo-link" href="#" target="_blank" rel="noopener noreferrer"></a></p>
+        </header>
+
+        <nav id="breadcrumbs"></nav>
+        <ul id="file-list">
+            <li class="loader">Loading repository contents...</li>
+        </ul>
+    </main>
+    
+    <div id="preview-container">
+        <div id="preview-content">
+            <div id="preview-header">
+                <span id="preview-filename"></span>
+                <button id="close-preview" title="Close preview">&times;</button>
+            </div>
+            <pre id="preview-text"></pre>
+        </div>
     </div>
-  </main>
+
+
+    <script>
+        // --- CONFIGURATION ---
+        const REPO_OWNER = 'Cyclotron123';
+        const REPO_NAME = 'BSDS_Materials';
+        const REPO_BRANCH = 'main';
+        // --- END CONFIGURATION ---
+
+        const GITHUB_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${REPO_BRANCH}?recursive=1`;
+        const GITHUB_REPO_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}`;
+        
+        const TEXT_FILE_EXTENSIONS = ['md', 'txt', 'json', 'yml', 'yaml', 'js', 'ts', 'tsx', 'jsx', 'html', 'css', 'py', 'go', 'rs', 'c', 'cpp', 'log'];
+
+        let allFiles = [];
+
+        const breadcrumbsEl = document.getElementById('breadcrumbs');
+        const fileListEl = document.getElementById('file-list');
+        const repoTitleEl = document.getElementById('repo-title');
+        const repoLinkEl = document.getElementById('repo-link');
+        
+        const previewContainer = document.getElementById('preview-container');
+        const previewFilenameEl = document.getElementById('preview-filename');
+        const previewTextEl = document.getElementById('preview-text');
+        const closePreviewButton = document.getElementById('close-preview');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            repoTitleEl.textContent = `${REPO_OWNER}/${REPO_NAME}`;
+            repoLinkEl.textContent = `${REPO_OWNER}/${REPO_NAME}`;
+            repoLinkEl.href = GITHUB_REPO_URL;
+            
+            fetchAndRender();
+
+            closePreviewButton.addEventListener('click', closePreview);
+            previewContainer.addEventListener('click', (e) => {
+                if (e.target === previewContainer) {
+                    closePreview();
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === "Escape" && previewContainer.style.display === 'flex') {
+                    closePreview();
+                }
+            });
+        });
+
+        async function fetchAndRender() {
+            try {
+                const response = await fetch(GITHUB_API_URL, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (!response.ok) {
+                    throw new Error(`GitHub API request failed: ${response.status}`);
+                }
+                const data = await response.json();
+                allFiles = data.tree;
+                
+                // On initial load, show only top-level folders
+                const topLevelFolders = allFiles.filter(file => file.type === 'tree' && !file.path.includes('/'));
+                const sortedItems = sortItems(topLevelFolders);
+
+                renderPath(sortedItems, '');
+            } catch (error) {
+                console.error('Error fetching repository data:', error);
+                fileListEl.innerHTML = `<li class="loader">Error loading repository. Check console for details.</li>`;
+            }
+        }
+        
+        function getContentsForPath(path) {
+            const items = allFiles.filter(file => {
+                const lastSlashIndex = file.path.lastIndexOf('/');
+                const parentPath = lastSlashIndex === -1 ? '' : file.path.substring(0, lastSlashIndex);
+                return parentPath === path;
+            });
+            return sortItems(items);
+        }
+
+        function renderPath(items, path) {
+            renderBreadcrumbs(path);
+            
+            fileListEl.innerHTML = '';
+            if (items.length === 0) {
+                fileListEl.innerHTML = `<li>This directory is empty.</li>`;
+                return;
+            }
+
+            items.forEach(item => {
+                const li = document.createElement('li');
+                const link = document.createElement('a');
+                
+                const icon = getIcon(item.type, item.path);
+                const name = item.path.substring(item.path.lastIndexOf('/') + 1);
+                
+                link.innerHTML = `${icon}<span>${name}</span>`;
+                link.href = "#"; // For accessibility
+                link.setAttribute('role', 'button');
+                link.setAttribute('tabindex', '0');
+
+                if (item.type === 'tree') {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const subItems = getContentsForPath(item.path);
+                        renderPath(subItems, item.path);
+                    });
+                     link.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                           e.preventDefault();
+                           const subItems = getContentsForPath(item.path);
+                           renderPath(subItems, item.path);
+                        }
+                    });
+                } else { // blob
+                    const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${item.path}`;
+                    const extension = item.path.split('.').pop().toLowerCase();
+                    
+                    if (extension === 'pdf') {
+                         link.href = rawUrl;
+                         link.target = '_blank';
+                         link.rel = 'noopener noreferrer';
+                         link.removeAttribute('role');
+                    } else if (TEXT_FILE_EXTENSIONS.includes(extension)) {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            showTextPreview(name, rawUrl);
+                        });
+                        link.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                               e.preventDefault();
+                               showTextPreview(name, rawUrl);
+                            }
+                        });
+                    } else {
+                        link.href = `${GITHUB_REPO_URL}/blob/${REPO_BRANCH}/${item.path}`;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.removeAttribute('role');
+                    }
+                }
+                li.appendChild(link);
+                fileListEl.appendChild(li);
+            });
+        }
+        
+        function renderBreadcrumbs(path) {
+            breadcrumbsEl.innerHTML = '';
+            const homeLink = document.createElement('a');
+            homeLink.textContent = 'Home';
+            homeLink.href = '#';
+            homeLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const topLevelFolders = allFiles.filter(file => file.type === 'tree' && !file.path.includes('/'));
+                const sortedItems = sortItems(topLevelFolders);
+                renderPath(sortedItems, '');
+            });
+            breadcrumbsEl.appendChild(homeLink);
+
+            if (path) {
+                const segments = path.split('/');
+                let currentPath = '';
+                segments.forEach((segment, index) => {
+                    currentPath += (index > 0 ? '/' : '') + segment;
+                    const isLast = index === segments.length - 1;
+
+                    breadcrumbsEl.insertAdjacentHTML('beforeend', `<span> / </span>`);
+
+                    if (isLast) {
+                        const span = document.createElement('span');
+                        span.textContent = segment;
+                        breadcrumbsEl.appendChild(span);
+                    } else {
+                        const segmentLink = document.createElement('a');
+                        segmentLink.textContent = segment;
+                        segmentLink.href = '#';
+                        const pathToRender = currentPath; // Capture path at this iteration
+                        segmentLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const subItems = getContentsForPath(pathToRender);
+                            renderPath(subItems, pathToRender);
+                        });
+                        breadcrumbsEl.appendChild(segmentLink);
+                    }
+                });
+            }
+        }
+        
+        async function showTextPreview(filename, url) {
+            previewFilenameEl.textContent = filename;
+            previewTextEl.textContent = 'Loading...';
+            previewContainer.style.display = 'flex';
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to fetch file content.');
+                const text = await response.text();
+                previewTextEl.textContent = text;
+            } catch (error) {
+                previewTextEl.textContent = 'Error loading file preview.';
+                console.error(error);
+            }
+        }
+
+        function closePreview() {
+            previewContainer.style.display = 'none';
+            previewTextEl.textContent = '';
+            previewFilenameEl.textContent = '';
+        }
+
+        function getIcon(type, filename) {
+            const folderIcon = `<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="color: var(--primary-color);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>`;
+            const fileIcon = `<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+            
+            return type === 'tree' ? folderIcon : fileIcon;
+        }
+
+        function sortItems(items) {
+            return items.sort((a, b) => {
+                if (a.type === 'tree' && b.type === 'blob') return -1;
+                if (a.type === 'blob' && b.type === 'tree') return 1;
+                const nameA = a.path.substring(a.path.lastIndexOf('/') + 1);
+                const nameB = b.path.substring(b.path.lastIndexOf('/') + 1);
+                return nameA.localeCompare(nameB);
+            });
+        }
+    </script>
+
 </body>
 </html>
