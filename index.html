@@ -1,603 +1,572 @@
+<!--
+Single-file GitHub Pages File Manager
+Drop this file at the root of your repo (e.g. /index.html) and enable GitHub Pages.
+
+Change owner/repo/branch below in the CONFIG section if needed.
+
+Features:
+- Uses GitHub REST API to fetch the repo tree (recursive)
+- Shows only top-level folders on the main page
+- Clicking a folder toggles into a folder "subpage" (SPA, no reload)
+- Breadcrumbs, back button, accessible toggles
+- PDF files open in-browser via embedded iframe (raw.githubusercontent.com)
+- Text/Markdown/code preview in a modal
+- Keyboard-accessible controls and ARIA attributes
+- Dark-blue theme, white text, responsive
+
+Limitations & Notes:
+- This implementation uses the public GitHub REST API (rate-limited for unauthenticated requests).
+  If you hit rate limits, you'll see a message with a fallback suggestion.
+- For very large trees, rendering is lazy: nested items render only when expanded.
+- Single-file only — no external CSS/JS or libraries used.
+
+How to deploy to GitHub Pages (short):
+1. Put this file as `index.html` in the repo root on branch `main`.
+2. In the repo settings > Pages, enable GitHub Pages to serve from the `main` branch root.
+3. Visit `https://<username>.github.io/<repo>/` (may take a minute to publish).
+
+-->
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BSDS Materials — Browser</title>
-
-  <!--
-    Single-file GitHub Pages browser for a repository.
-
-    How to change repository:
-      - Edit the OWNER, REPO, and BRANCH constants in the <script> section near the bottom.
-
-    How it works:
-      - Uses GitHub Contents API to list directories and files.
-      - Top-level view shows only top-level folders (per user request).
-      - Click (or keyboard-activate) folders to "open" them as subpages by updating the location hash.
-      - Breadcrumbs reflect current path and let you navigate up.
-      - Text files are previewed inline (fetched from the API and shown as decoded UTF-8).
-      - PDFs are opened in an in-browser viewer using raw.githubusercontent.com URLs.
-      - Other files provide a "Download / Open raw" link to raw.githubusercontent.com.
-
-    How to deploy to GitHub Pages:
-      - Save this file as index.html at the root of the repository you want to host (or any branch you choose).
-      - In the repository's Settings -> Pages, set the source to the branch where index.html is located (e.g., main) and the root folder.
-      - Wait a minute and visit https://<your-username>.github.io/<repo-name>/ (or the Pages URL shown).
-  -->
-
+  <title>Repo Browser — BSDS_Materials</title>
   <style>
+    /* CONFIGURED THEME: dark blue background, white primary text */
     :root{
-      --bg: #041022; /* deep navy dark-blue background */
-      --panel: #082438;
-      --muted: #9fb3c8;
-      --accent: #3fb0ff;
-      --white: #ffffff;
-      --radius: 10px;
-      --gap: 14px;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color-scheme: dark;
+      --bg:#071A34; /* deep navy */
+      --panel:#0b2545; /* panel */
+      --card:#09233f;
+      --muted:#cbd5e1; /* off-white */
+      --accent:#1f6feb; /* subtle accent */
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --gap:12px;
+      --shadow: 0 6px 18px rgba(2,6,23,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
     }
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#02121a);color:var(--white);}
-    .app{
-      max-width:1100px;margin:32px auto;padding:28px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:16px;box-shadow: 0 6px 30px rgba(0,0,0,0.6);min-height:60vh;
+    html,body{height:100%;}
+    body{
+      margin:0;
+      min-height:100%;
+      background:linear-gradient(180deg,var(--bg), #051427 120%);
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      font-size:15px;
+      line-height:1.4;
+      padding:20px;
     }
 
-    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:var(--gap);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      margin-bottom:6px;
+    }
     .logo{
-      width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#2b8bd6);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bg);font-size:20px;
-      box-shadow:0 4px 18px rgba(59,113,173,0.18);
+      width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,var(--panel),#063053);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);
       flex:0 0 56px;
     }
-    h1{font-size:20px;margin:0}
-    .sub{color:var(--muted);font-size:13px;margin-top:4px}
+    .logo strong{font-size:18px;color:var(--muted);}
+    h1{margin:0;font-size:18px;letter-spacing:0.2px}
+    .subtitle{color:var(--muted);font-size:13px}
 
-    main{display:grid;grid-template-columns: 320px 1fr;gap:20px}
-    @media (max-width:880px){ main{grid-template-columns: 1fr;}}
-    nav.panel{
-      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);min-height:300px;
-    }
-    .panel h2{font-size:14px;margin:0 0 10px 0;color:var(--muted)}
-    .list{display:flex;flex-direction:column;gap:10px}
-    .folder{
-      display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;cursor:pointer;
-      background:transparent;border:1px solid transparent;outline:none;
-      color:var(--white);font-weight:600;
-    }
-    .folder:focus, .folder:hover{background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.03)}
-    .folder .icon{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
-    .meta{font-size:12px;color:var(--muted);font-weight:500}
+    .controls{display:flex;gap:8px;align-items:center;margin-left:auto}
+    .search{background:var(--card);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);min-width:220px}
+    .hint{font-size:13px;color:var(--muted);margin-top:6px}
 
-    section.viewer{
-      padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      min-height:300px;display:flex;flex-direction:column;
+    main{display:block;}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:18px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:16px;box-shadow:var(--shadow);cursor:pointer;border:1px solid rgba(255,255,255,0.03);
+      transition:transform .16s ease, box-shadow .16s ease;
     }
-    .crumbs{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-    .crumb{font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
-    .crumb.curr{color:var(--white);font-weight:700}
-    .viewer-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .viewer-title{font-size:16px;font-weight:700}
-    .viewer-tools{display:flex;gap:8px;align-items:center}
-    .btn{
-      background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:var(--white);cursor:pointer;font-weight:600;
-    }
-    .btn:focus{outline:3px solid rgba(63,176,255,0.12)}
-    .content{overflow:auto;background:rgba(0,0,0,0.15);padding:14px;border-radius:10px;color:var(--white);flex:1;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;font-size:13px;line-height:1.5}
-    .placeholder{color:var(--muted);padding:18px;border-radius:8px}
-    .file-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border-radius:8px}
+    .card:focus{outline:3px solid rgba(31,111,235,0.14)}
+    .card:hover{transform:translateY(-6px)}
+    .card .name{font-weight:600}
+    .card .meta{color:var(--muted);font-size:13px;margin-top:6px}
+
+    .folder-list{list-style:none;padding:0;margin:0}
+    .folder-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px}
+
+    .breadcrumbs{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+    .breadcrumb{cursor:pointer}
+    .breadcrumb:focus{outline:2px solid rgba(255,255,255,0.06)}
+
+    .file-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px}
+    .file-row .left{display:flex;gap:12px;align-items:center}
     .file-row:hover{background:rgba(255,255,255,0.02)}
-    .file-left{display:flex;align-items:center;gap:12px}
-    .file-icon{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
-    .file-name{font-weight:700}
-    .small{font-size:12px;color:var(--muted)}
+    .file-name{font-weight:500}
+    .file-meta{color:var(--muted);font-size:13px}
 
-    /* accessible focus outline for keyboard users */
+    .back-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;cursor:pointer}
+
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.8));display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
+    .modal{background:var(--panel);border-radius:12px;width:calc(100% - 40px);max-width:1100px;max-height:88vh;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+    .modal-header{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;gap:8px}
+    .modal-body{padding:8px;background:var(--glass);overflow:auto;flex:1}
+    .modal-iframe{width:100%;height:80vh;border:0}
+    .close-btn{margin-left:auto}
+
+    /* small screens */
+    @media (max-width:600px){
+      .search{min-width:120px}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+    }
+
+    /* accessible focus-visible tweak */
     :focus{outline:none}
-    .a11y-focus:focus{box-shadow:0 0 0 4px rgba(63,176,255,0.12);border-radius:8px}
+    :focus-visible{outline:3px solid rgba(255,255,255,0.08);outline-offset:2px}
 
-    footer{margin-top:16px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    a.link{color:var(--accent);text-decoration:none}
+    .message{padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
   </style>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Repository file browser">
+  <div class="app" id="app">
     <header>
-      <div class="logo" aria-hidden="true">BS</div>
+      <div class="logo" aria-hidden="true"><strong>BSDS</strong></div>
       <div>
-        <h1>BSDS_Materials — Browser</h1>
-        <div class="sub" id="repoDesc">Repository view powered by GitHub Contents API</div>
+        <h1 id="title">BSDS_Materials — Repository Browser</h1>
+        <div class="subtitle">Click a primary folder to open — PDFs open in-browser.</div>
+      </div>
+
+      <div class="controls">
+        <input id="search" class="search" placeholder="Search current folder (press / to focus)" aria-label="Search files" />
       </div>
     </header>
 
     <main>
-      <nav class="panel" aria-label="Top-level folders">
-        <h2>Top-level Folders</h2>
-        <div class="list" id="foldersList" role="list" tabindex="0" aria-label="Repository folders">
-          <!-- Top-level folders inserted here -->
+      <div id="status" class="hint message">Loading repository structure…</div>
+      <nav id="nav" style="margin-top:10px"></nav>
+
+      <section id="content">
+        <!-- Folder cards view or folder contents rendered here -->
+        <div id="mainView">
+          <div class="hint" style="margin-top:8px">Top-level folders</div>
+          <div id="folders" class="grid" role="list" aria-label="Top-level folders"></div>
         </div>
 
-        <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
-
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button id="refreshBtn" class="btn a11y-focus" title="Refresh (r)">Refresh</button>
-          <button id="homeBtn" class="btn a11y-focus" title="Home (g then h)">Home</button>
-          <div style="flex:1"></div>
-          <div class="small" id="rateNote">Public GitHub API used; unauthenticated rate limits apply</div>
-        </div>
-      </nav>
-
-      <section class="viewer" id="viewer" aria-live="polite">
-        <div class="crumbs" id="breadcrumbs" aria-label="Breadcrumbs">
-          <!-- breadcrumbs here -->
-        </div>
-
-        <div class="viewer-header">
-          <div class="viewer-title" id="viewerTitle">Top-level Folders</div>
-          <div class="viewer-tools">
-            <button id="toggleListView" class="btn a11y-focus" title="Toggle list/grid view">Toggle view</button>
-            <a id="rawOpen" class="btn link" style="display:none" target="_blank" rel="noopener">Open raw</a>
-            <a id="downloadLink" class="btn link" style="display:none" target="_blank" rel="noopener">Download</a>
+        <div id="folderView" style="display:none">
+          <div style="display:flex;gap:12px;align-items:center;margin-top:6px">
+            <button id="backToMain" class="back-btn" aria-label="Back to main" title="Back to main">← Main</button>
+            <div class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumbs"></div>
           </div>
-        </div>
 
-        <div id="viewerBody" class="content" tabindex="0">
-          <div class="placeholder" id="placeholder">Select a folder on the left to view its contents. Use keyboard: Tab to focus folders, Enter or Space to open.</div>
+          <div id="folderContents" style="margin-top:12px"></div>
         </div>
       </section>
     </main>
+  </div>
 
-    <footer>
-      <div>Owner: <strong id="ownerName">Cyclotron123</strong> · Repo: <strong id="repoName">BSDS_Materials</strong> · Branch: <strong id="branchName">main</strong></div>
-      <div>Accessible keyboard toggles: Tab, Enter/Space to open, g then h to go home, r to refresh</div>
-    </footer>
+  <!-- Modal for preview / PDF -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <div id="modalTitle">Preview</div>
+        <button id="modalClose" class="back-btn close-btn" aria-label="Close preview">Close</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
   </div>
 
   <script>
-    // ======= CONFIGURATION =======
-    // Change these constants to point the browser at a different repository/branch.
-    const OWNER = 'Cyclotron123'; // <-- change owner here
-    const REPO = 'BSDS_Materials'; // <-- change repo here
-    const BRANCH = 'main';         // <-- change branch here
-    // =============================
+  /*
+    CONFIG: change these if you want to point to another repo/branch
+  */
+  const CONFIG = {
+    owner: 'Cyclotron123',
+    repo: 'BSDS_Materials',
+    branch: 'main'
+  };
 
-    // Derived DOM elements
-    const foldersList = document.getElementById('foldersList');
-    const viewerBody = document.getElementById('viewerBody');
-    const viewerTitle = document.getElementById('viewerTitle');
-    const breadcrumbs = document.getElementById('breadcrumbs');
-    const placeholder = document.getElementById('placeholder');
-    const repoDesc = document.getElementById('repoDesc');
-    const ownerName = document.getElementById('ownerName');
-    const repoName = document.getElementById('repoName');
-    const branchName = document.getElementById('branchName');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const homeBtn = document.getElementById('homeBtn');
-    const rawOpen = document.getElementById('rawOpen');
-    const downloadLink = document.getElementById('downloadLink');
-    const toggleListView = document.getElementById('toggleListView');
-    const rateNote = document.getElementById('rateNote');
+  // End CONFIG
 
-    ownerName.textContent = OWNER;
-    repoName.textContent = REPO;
-    branchName.textContent = BRANCH;
+  // Helper: build API URLs
+  const API_TREE = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/git/trees/${CONFIG.branch}?recursive=1`;
+  const RAW_BASE = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/`;
 
-    // Accessibility: track last key for shortcuts like "g then h"
-    let lastKey = null;
-    window.addEventListener('keydown', (e) => {
-      // simple single-key shortcuts
-      if (e.key === 'r' || e.key === 'R') { e.preventDefault(); loadTopLevel(); return; }
-      if ((e.key === 'g' || e.key === 'G')) { lastKey = 'g'; setTimeout(()=> lastKey = null, 800); return; }
-      if (lastKey === 'g' && (e.key === 'h' || e.key === 'H')) { e.preventDefault(); goHome(); lastKey = null; return; }
-      // navigate with enter/space handled on focused elements
-    });
+  // State
+  let rawTree = null; // array of paths/objects from API
+  let treeMap = {}; // nested map: { 'folder/': {folders: {...}, files: [...] } }
+  let currentPath = ''; // '' indicates main page
 
-    // Keyboard activation for clickable elements: space and enter will trigger click
-    document.addEventListener('keydown', (e) => {
-      if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList.contains('focus-click')) {
-        e.preventDefault();
-        document.activeElement.click();
+  // DOM
+  const statusEl = document.getElementById('status');
+  const foldersEl = document.getElementById('folders');
+  const folderView = document.getElementById('folderView');
+  const mainView = document.getElementById('mainView');
+  const folderContents = document.getElementById('folderContents');
+  const breadcrumbsEl = document.getElementById('breadcrumbs');
+  const backToMainBtn = document.getElementById('backToMain');
+  const navEl = document.getElementById('nav');
+  const searchInput = document.getElementById('search');
+
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const modalBody = document.getElementById('modalBody');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalClose = document.getElementById('modalClose');
+
+  // Accessibility: focus trap helpers
+  let lastFocusedBeforeModal = null;
+
+  function openModal(title, contentNode, isPdf=false){
+    modalTitle.textContent = title || 'Preview';
+    modalBody.innerHTML = '';
+    if(isPdf){
+      const iframe = document.createElement('iframe');
+      iframe.className = 'modal-iframe';
+      iframe.src = contentNode; // contentNode is raw URL for PDF
+      iframe.title = title || 'PDF preview';
+      modalBody.appendChild(iframe);
+    } else {
+      modalBody.appendChild(contentNode);
+    }
+    modalBackdrop.style.display = 'flex';
+    modalBackdrop.setAttribute('aria-hidden','false');
+    lastFocusedBeforeModal = document.activeElement;
+    modalClose.focus();
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(){
+    modalBackdrop.style.display = 'none';
+    modalBackdrop.setAttribute('aria-hidden','true');
+    modalBody.innerHTML = '';
+    document.body.style.overflow = '';
+    if(lastFocusedBeforeModal) lastFocusedBeforeModal.focus();
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', (e)=>{
+    if(e.target === modalBackdrop) closeModal();
+  });
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape'){
+      if(modalBackdrop.style.display === 'flex') closeModal();
+    }
+    if(e.key === '/' && document.activeElement !== searchInput){
+      e.preventDefault();searchInput.focus();
+    }
+  });
+
+  // Fetch tree from GitHub
+  async function fetchTree(){
+    try{
+      statusEl.textContent = 'Fetching repository tree from GitHub…';
+      const res = await fetch(API_TREE, {headers:{'Accept':'application/vnd.github.v3+json'}});
+      if(res.status === 403){
+        // rate-limited or forbidden
+        statusEl.innerHTML = '<strong>API rate limit reached or access forbidden.</strong> Fallback: consider creating a personal access token or try again later.';
+        // try to show a fallback: basic manual message
+        return null;
       }
-    });
-
-    // Utility: GitHub API endpoints
-    function contentsApiPath(path){
-      // path: folder or file path relative to repo root, empty string for root
-      return `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${encodeURIComponent(BRANCH)}`;
+      if(!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const data = await res.json();
+      if(!data.tree) throw new Error('Unexpected API response');
+      rawTree = data.tree; // array of {path, mode, type, sha, url}
+      statusEl.textContent = '';
+      return rawTree;
+    }catch(err){
+      console.error(err);
+      statusEl.innerHTML = '<strong>Could not fetch repository tree.</strong> Check owner/repo/branch config or network.';
+      return null;
     }
-    function rawUrl(path){
-      return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${encodeURIComponent(BRANCH)}/${path}`;
-    }
+  }
 
-    // Fetch and list top-level entries, but show only top-level folders on the main page per request.
-    async function loadTopLevel(){
-      setLoadingState(true, 'Loading top-level folders...');
-      clearViewer();
-      try{
-        const res = await fetch(contentsApiPath(''));
-        if (!res.ok) throw new Error('Failed to fetch repository contents. ' + res.statusText);
-        const entries = await res.json();
-        // entries is an array of objects with {name, path, type, ...}
-        // Filter to directories only for the main page
-        const folders = entries.filter(e => e.type === 'dir').sort((a,b)=>a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
-        renderFolders(folders);
-        repoDesc.textContent = `Browsing ${OWNER}/${REPO}@${BRANCH}.`;
-      }catch(err){
-        console.error(err);
-        foldersList.innerHTML = `<div class="small" style="color:var(--muted)">Unable to load repository contents: ${escapeHtml(err.message)}</div>`;
-      } finally {
-        setLoadingState(false);
-      }
-    }
-
-    // Render folder list in the left panel
-    function renderFolders(folders){
-      foldersList.innerHTML = '';
-      if (!folders.length){
-        foldersList.innerHTML = `<div class="small" style="color:var(--muted)">No top-level folders found in this repository.</div>`;
-        return;
-      }
-      folders.forEach(folder=>{
-        const btn = document.createElement('button');
-        btn.setAttribute('role','listitem');
-        btn.className = 'folder focus-click a11y-focus';
-        btn.title = 'Open folder ' + folder.name;
-        btn.tabIndex = 0;
-        btn.innerHTML = `
-          <div class="icon" aria-hidden="true">📁</div>
-          <div style="display:flex;flex-direction:column;align-items:flex-start;text-align:left">
-            <div style="font-weight:700">${escapeHtml(folder.name)}</div>
-            <div class="meta">Folder</div>
-          </div>
-        `;
-        btn.addEventListener('click', ()=> openPath(folder.path));
-        // support keyboard focus visuals
-        btn.addEventListener('focus', ()=> btn.classList.add('focused'));
-        btn.addEventListener('blur', ()=> btn.classList.remove('focused'));
-        foldersList.appendChild(btn);
-      });
-    }
-
-    // Open a path (folder). Uses URL hash to create subpages and allow navigation/back.
-    // Example: #/path/to/folder
-    function openPath(path){
-      // Update hash, this triggers onhashchange handler
-      location.hash = '#/' + encodeURIComponent(path);
-    }
-
-    // Hash parsing and navigation
-    window.addEventListener('hashchange', handleHashChange);
-    async function handleHashChange(){
-      const hash = decodeURIComponent(location.hash || '');
-      if (!hash || hash === '') { // go to top-level view
-        clearViewer();
-        viewerTitle.textContent = 'Top-level Folders';
-        breadcrumbs.innerHTML = '';
-        placeholder.style.display = 'block';
-        placeholder.textContent = 'Select a folder on the left to view its contents. Use keyboard: Tab to focus folders, Enter or Space to open.';
-        rawOpen.style.display = 'none';
-        downloadLink.style.display = 'none';
-        return;
-      }
-      if (!hash.startsWith('#/')) return;
-      const path = hash.slice(2);
-      await showDirectory(path);
-    }
-
-    // Show directory contents for a given path
-    async function showDirectory(path){
-      setLoadingState(true, 'Loading ' + path + ' ...');
-      try{
-        const res = await fetch(contentsApiPath(path));
-        if (!res.ok) throw new Error('Failed to load folder: ' + res.statusText);
-        const entries = await res.json();
-        // entries may be an array for a folder, or a single object for a file
-        if (!Array.isArray(entries)){
-          // It's a file; open file view instead
-          return showFile(entries.path);
-        }
-        // Show breadcrumbs
-        renderBreadcrumbs(path);
-        viewerTitle.textContent = path.split('/').slice(-1)[0] || path;
-        rawOpen.style.display = 'none';
-        downloadLink.style.display = 'none';
-        // Render folder contents: folders first, then files
-        const dirs = entries.filter(e=>e.type === 'dir').sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
-        const files = entries.filter(e=>e.type === 'file').sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
-        renderDirectoryList(path, dirs, files);
-      }catch(err){
-        console.error(err);
-        viewerBody.innerHTML = `<div class="placeholder">Unable to load folder: ${escapeHtml(err.message)}</div>`;
-      } finally {
-        setLoadingState(false);
-      }
-    }
-
-    function renderBreadcrumbs(path){
-      breadcrumbs.innerHTML = '';
-      const parts = path.split('/').filter(Boolean);
-      // Home crumb
-      const homeCrumb = document.createElement('div');
-      homeCrumb.className = 'crumb';
-      homeCrumb.textContent = 'Home';
-      homeCrumb.tabIndex = 0;
-      homeCrumb.addEventListener('click', ()=> { location.hash = ''; });
-      breadcrumbs.appendChild(homeCrumb);
-
+  // Build a nested map from paths for easy rendering
+  function buildTreeMap(tree){
+    // tree: array of {path, type}
+    const map = { '': {folders: new Set(), files: []} };
+    for(const item of tree){
+      const path = item.path;
+      const parts = path.split('/');
+      // walk levels, ensure map nodes exist
       let accum = '';
-      parts.forEach((p,i)=>{
-        accum += (i ? '/' : '') + p;
-        const c = document.createElement('div');
-        c.className = 'crumb' + (i === parts.length-1 ? ' curr' : '');
-        c.textContent = p;
-        c.tabIndex = 0;
-        c.addEventListener('click', ()=> { location.hash = '#/' + encodeURIComponent(accum); });
-        breadcrumbs.appendChild(createSep());
-        breadcrumbs.appendChild(c);
-      });
-
-      function createSep(){ const s=document.createElement('div'); s.textContent='›'; s.className='small'; s.style.margin='0 6px'; return s; }
-    }
-
-    function renderDirectoryList(currentPath, dirs, files){
-      if (!dirs.length && !files.length){
-        viewerBody.innerHTML = `<div class="placeholder">This folder is empty.</div>`;
-        return;
-      }
-      const container = document.createElement('div');
-      container.style.display = 'flex';
-      container.style.flexDirection = 'column';
-      container.style.gap = '6px';
-
-      // Directories
-      if (dirs.length){
-        const hdr = document.createElement('div');
-        hdr.className = 'small'; hdr.textContent = 'Folders';
-        container.appendChild(hdr);
-        dirs.forEach(d=>{
-          const row = document.createElement('div');
-          row.className = 'file-row focus-click a11y-focus';
-          row.tabIndex = 0;
-          row.innerHTML = `
-            <div class="file-left">
-              <div class="file-icon">📁</div>
-              <div>
-                <div class="file-name">${escapeHtml(d.name)}</div>
-                <div class="small">Folder</div>
-              </div>
-            </div>
-            <div class="small">Open</div>
-          `;
-          row.addEventListener('click', ()=> openPath(d.path));
-          container.appendChild(row);
-        });
-      }
-
-      // Files
-      if (files.length){
-        const hdr = document.createElement('div');
-        hdr.className = 'small'; hdr.textContent = 'Files';
-        hdr.style.marginTop = '10px';
-        container.appendChild(hdr);
-        files.forEach(f=>{
-          const row = document.createElement('div');
-          row.className = 'file-row focus-click a11y-focus';
-          row.tabIndex = 0;
-          row.innerHTML = `
-            <div class="file-left">
-              <div class="file-icon">📄</div>
-              <div>
-                <div class="file-name">${escapeHtml(f.name)}</div>
-                <div class="small">${escapeHtml(f.size ? humanFileSize(f.size) : '')}</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <button class="btn open-file a11y-focus" title="Preview/Open ${escapeHtml(f.name)}">Open</button>
-            </div>
-          `;
-          row.querySelector('.open-file').addEventListener('click', ()=> showFile(f.path));
-          container.appendChild(row);
-        });
-      }
-
-      viewerBody.innerHTML = '';
-      viewerBody.appendChild(container);
-    }
-
-    // Show a file: preview text files inline, open PDFs in embedded viewer, otherwise provide raw link
-    async function showFile(path){
-      setLoadingState(true, 'Loading file ' + path + ' ...');
-      try{
-        // Fetch file metadata and content via Contents API
-        const res = await fetch(contentsApiPath(path));
-        if (!res.ok) throw new Error('Failed to load file: ' + res.statusText);
-        const meta = await res.json();
-        // meta contains 'encoding' and 'content' for files
-        renderBreadcrumbs(path.split('/').slice(0,-1).join('/'));
-        viewerTitle.textContent = meta.name;
-        const ext = meta.name.split('.').pop().toLowerCase();
-
-        // Provide raw and download links
-        const raw = rawUrl(path);
-        rawOpen.href = raw;
-        rawOpen.style.display = 'inline-block';
-        rawOpen.textContent = 'Open raw';
-        downloadLink.href = raw;
-        downloadLink.style.display = 'inline-block';
-        downloadLink.textContent = 'Download';
-
-        // Text file preview heuristics
-        if (isTextFile(ext, meta)){
-          // decode base64 content reported by the API
-          const text = decodeContent(meta);
-          viewerBody.innerHTML = '';
-          const pre = document.createElement('pre');
-          pre.style.whiteSpace = 'pre-wrap';
-          pre.style.wordBreak = 'break-word';
-          pre.textContent = text;
-          viewerBody.appendChild(pre);
-          return;
-        }
-
-        // PDF in-browser viewing
-        if (ext === 'pdf'){
-          viewerBody.innerHTML = '';
-          const embed = document.createElement('iframe');
-          embed.src = raw;
-          embed.style.width = '100%';
-          embed.style.height = '70vh';
-          embed.style.border = 'none';
-          embed.title = meta.name;
-          viewerBody.appendChild(embed);
-          return;
-        }
-
-        // Image files can be previewed in an <img>
-        if (['png','jpg','jpeg','gif','webp','svg'].includes(ext)){
-          viewerBody.innerHTML = '';
-          const img = document.createElement('img');
-          img.src = raw;
-          img.alt = meta.name;
-          img.style.maxWidth = '100%';
-          img.style.borderRadius = '8px';
-          img.style.display = 'block';
-          viewerBody.appendChild(img);
-          return;
-        }
-
-        // For binary or unknown types, show metadata and raw link
-        viewerBody.innerHTML = `<div class="placeholder">No preview available for this file type. Use "Open raw" or "Download" to get the file.</div>`;
-      }catch(err){
-        console.error(err);
-        viewerBody.innerHTML = `<div class="placeholder">Unable to load file: ${escapeHtml(err.message)}</div>`;
-      } finally {
-        setLoadingState(false);
-      }
-    }
-
-    // Small helper: determine if the file is plain text (by extension and content size)
-    function isTextFile(ext, meta){
-      const textExts = ['md','txt','json','yaml','yml','py','js','ts','html','css','csv','log','ini','cfg','tex','rst'];
-      if (textExts.includes(ext)) return true;
-      // fallback heuristic: content encoding present and size not huge
-      return (meta.encoding === 'base64' && (meta.size === undefined || meta.size < 200000));
-    }
-
-    // decode base64 content from GitHub API safely into UTF-8 string
-    function decodeContent(meta){
-      try{
-        const b64 = meta.content.replace(/\n/g,'');
-        // atob may throw on large strings; use Uint8Array approach for utf-8
-        const binary = atob(b64);
-        // convert binary string to bytes
-        const bytes = new Uint8Array(binary.length);
-        for (let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-        // decode UTF-8
-        const decoder = new TextDecoder('utf-8', {fatal:false});
-        return decoder.decode(bytes);
-      }catch(e){
-        console.warn('decode failed', e);
-        return '[Unable to decode file content as UTF-8]';
-      }
-    }
-
-    // Clear viewer to initial state
-    function clearViewer(){
-      viewerBody.innerHTML = '';
-      placeholder.style.display = 'block';
-      rawOpen.style.display = 'none';
-      downloadLink.style.display = 'none';
-      breadcrumbs.innerHTML = '';
-      viewerTitle.textContent = 'Top-level Folders';
-    }
-
-    // small UI utilities
-    function setLoadingState(isLoading, label){
-      if (isLoading){
-        placeholder.style.display = 'block';
-        placeholder.textContent = label || 'Loading...';
-        viewerBody.style.opacity = '0.9';
-      } else {
-        // clear placeholder only if content has been replaced
-        if (viewerBody && viewerBody.children.length > 0){
-          placeholder.style.display = 'none';
+      for(let i=0;i<parts.length;i++){
+        const part = parts[i];
+        const isLast = i === parts.length-1;
+        const parent = accum;
+        const nodeKey = accum + (part) + (isLast && item.type==='blob' ? '' : '/');
+        // ensure parent exists
+        if(!map[parent]) map[parent] = {folders: new Set(), files: []};
+        if(isLast){
+          if(item.type === 'tree'){
+            map[parent].folders.add(part + '/');
+            // ensure child entry
+            const childFull = parent + part + '/';
+            if(!map[childFull]) map[childFull] = {folders: new Set(), files: []};
+          } else if(item.type === 'blob'){
+            // file — add to parent files
+            map[parent].files.push({name:part, path: parent + part});
+          }
         } else {
-          placeholder.style.display = 'block';
+          // ensure intermediate folder recorded
+          map[parent].folders.add(part + '/');
+          accum += part + '/';
+          if(!map[accum]) map[accum] = {folders: new Set(), files: []};
         }
-        viewerBody.style.opacity = '1';
       }
     }
-
-    function humanFileSize(size){
-      if (!size) return '';
-      const i = Math.floor(Math.log(size) / Math.log(1024));
-      return (size / Math.pow(1024, i)).toFixed(1) * 1 + ' ' + ['B','kB','MB','GB','TB'][i];
+    // convert folder sets to arrays for deterministic iteration
+    for(const k of Object.keys(map)){
+      map[k].folders = Array.from(map[k].folders).sort();
+      map[k].files = map[k].files.sort((a,b)=>a.name.localeCompare(b.name));
     }
+    return map;
+  }
 
-    function escapeHtml(s){ if (!s) return ''; return s.replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+  // Render top-level folders as cards
+  function renderTopLevel(){
+    foldersEl.innerHTML = '';
+    const top = treeMap[''];
+    if(!top){
+      foldersEl.innerHTML = '<div class="message">No folders found in the repository root.</div>';
+      return;
+    }
+    const folders = top.folders;
+    if(folders.length === 0){
+      foldersEl.innerHTML = '<div class="message">No top-level folders found.</div>';
+      return;
+    }
+    for(const folder of folders){
+      const name = folder.replace(/\/$/,'');
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.tabIndex = 0;
+      card.setAttribute('role','listitem');
+      card.setAttribute('aria-label', name + ' folder');
+      card.innerHTML = `<div class="name">📁 ${escapeHtml(name)}</div><div class="meta">Folder</div>`;
+      card.addEventListener('click', ()=>openFolder(name + '/'));
+      card.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFolder(name + '/'); } });
+      foldersEl.appendChild(card);
+    }
+  }
 
-    // Toggle list view (example behavior: toggles monospace -> normal and compacting)
-    let compact = false;
-    toggleListView.addEventListener('click', ()=>{
-      compact = !compact;
-      if (compact){
-        viewerBody.style.fontFamily = 'system-ui, sans-serif';
-        viewerBody.style.fontSize = '14px';
-      } else {
-        viewerBody.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace';
-        viewerBody.style.fontSize = '13px';
+  // Open folder 'path' where path includes trailing slash (e.g. 'BSDS 1/')
+  function openFolder(path){
+    currentPath = path;
+    mainView.style.display = 'none';
+    folderView.style.display = 'block';
+    renderBreadcrumbs(path);
+    renderFolderContents(path);
+    searchInput.value = '';
+    searchInput.focus();
+  }
+
+  function renderBreadcrumbs(path){
+    breadcrumbsEl.innerHTML = '';
+    const crumbs = [];
+    let accum = '';
+    const parts = path.split('/').filter(Boolean);
+    crumbs.push({name:'Home', path:''});
+    for(const p of parts){ accum += p + '/'; crumbs.push({name:p, path:accum}); }
+    crumbs.forEach((c,i)=>{
+      const span = document.createElement('div');
+      span.className = 'breadcrumb';
+      span.tabIndex = 0;
+      span.textContent = c.name;
+      span.addEventListener('click', ()=>{
+        if(c.path === ''){ showMain(); } else { openFolder(c.path); }
+      });
+      span.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); if(c.path === ''){ showMain(); } else { openFolder(c.path); } } });
+      breadcrumbsEl.appendChild(span);
+      if(i < crumbs.length-1){
+        const sep = document.createElement('div'); sep.textContent = '›'; sep.style.margin = '0 6px'; sep.style.color = 'var(--muted)'; breadcrumbsEl.appendChild(sep);
       }
     });
+  }
 
-    // Refresh and home buttons
-    refreshBtn.addEventListener('click', ()=> loadTopLevel());
-    homeBtn.addEventListener('click', ()=> goHome());
-    function goHome(){ location.hash = ''; clearViewer(); }
+  function showMain(){
+    currentPath = '';
+    folderView.style.display = 'none';
+    mainView.style.display = 'block';
+    renderTopLevel();
+  }
 
-    // Initialize: load top-level folders and respect existing hash
-    (function init(){
-      // If there's a hash, attempt to open it; otherwise load top-level folders.
-      if (location.hash && location.hash.startsWith('#/')){
-        handleHashChange().catch(()=>loadTopLevel());
-      } else {
-        loadTopLevel();
+  function renderFolderContents(path){
+    const node = treeMap[path];
+    if(!node){ folderContents.innerHTML = '<div class="message">Folder empty or not found.</div>'; return; }
+    // container
+    folderContents.innerHTML = '';
+    // Folders first
+    if(node.folders.length){
+      const fldTitle = document.createElement('div'); fldTitle.className = 'hint'; fldTitle.textContent = 'Folders'; folderContents.appendChild(fldTitle);
+      const ul = document.createElement('ul'); ul.className = 'folder-list';
+      for(const f of node.folders){
+        const li = document.createElement('li'); li.className = 'folder-item';
+        const left = document.createElement('div'); left.style.display='flex';left.style.alignItems='center';left.style.gap='10px';
+        const btn = document.createElement('button'); btn.className='back-btn'; btn.textContent='▸'; btn.setAttribute('aria-label','Expand folder '+f);
+        btn.addEventListener('click', ()=>{
+          // toggle inline expansion
+          if(li.querySelector('.child-contents')){
+            li.removeChild(li.querySelector('.child-contents'));
+            btn.textContent='▸';
+          } else {
+            btn.textContent='▾';
+            const childContainer = document.createElement('div'); childContainer.className='child-contents'; childContainer.style.marginTop='8px'; childContainer.style.marginLeft='42px';
+            // render mini list of this subfolder's immediate children
+            renderMini(nodePath(path,f), childContainer);
+            li.appendChild(childContainer);
+          }
+        });
+        btn.tabIndex=0;
+        btn.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); btn.click(); } });
+        const nameSpan = document.createElement('div'); nameSpan.textContent = '📁 '+f.replace(/\/$/,''); nameSpan.style.fontWeight='600';
+        nameSpan.tabIndex=0; nameSpan.addEventListener('click', ()=> openFolder(nodePath(path,f)));
+        nameSpan.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFolder(nodePath(path,f)); } });
+        left.appendChild(btn); left.appendChild(nameSpan);
+        li.appendChild(left);
+        ul.appendChild(li);
       }
-      // show rate limit note for unauthenticated access
-      detectRateLimit();
-    })();
-
-    // Try to fetch rate limit info to display friendly note (best-effort, no auth)
-    async function detectRateLimit(){
-      try{
-        const r = await fetch('https://api.github.com/rate_limit');
-        if (!r.ok) return;
-        const j = await r.json();
-        if (j && j.rate){
-          rateNote.textContent = `API rate: ${j.rate.remaining}/${j.rate.limit} resets ${new Date(j.rate.reset*1000).toLocaleTimeString()}`;
-        }
-      }catch(e){}
+      folderContents.appendChild(ul);
     }
-
-    // Small enhancement: make left-panel list container keyboard-scrollable
-    foldersList.addEventListener('keydown', (e)=>{
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        const items = Array.from(foldersList.querySelectorAll('.folder'));
-        if (!items.length) return;
-        const idx = items.indexOf(document.activeElement);
-        let next = 0;
-        if (e.key === 'ArrowDown') next = Math.min(items.length-1, (idx === -1 ? -1 : idx) + 1);
-        if (e.key === 'ArrowUp') next = Math.max(0, (idx === -1 ? items.length : idx) - 1);
-        items[next].focus();
+    // Files
+    if(node.files.length){
+      const fTitle = document.createElement('div'); fTitle.className='hint'; fTitle.textContent='Files'; fTitle.style.marginTop='12px'; folderContents.appendChild(fTitle);
+      const div = document.createElement('div');
+      for(const file of node.files){
+        const row = document.createElement('div'); row.className='file-row';
+        const left = document.createElement('div'); left.className='left';
+        const fname = document.createElement('div'); fname.className='file-name'; fname.textContent = file.name;
+        fname.tabIndex=0; fname.setAttribute('role','button'); fname.setAttribute('aria-label','Open file '+file.name);
+        fname.addEventListener('click', ()=> openFile(file.path));
+        fname.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFile(file.path); } });
+        const meta = document.createElement('div'); meta.className='file-meta'; meta.textContent = detectFileType(file.name);
+        left.appendChild(fname); left.appendChild(meta);
+        const right = document.createElement('div');
+        const dl = document.createElement('a'); dl.href = RAW_BASE + file.path; dl.target='_blank'; dl.rel='noopener noreferrer'; dl.className='back-btn'; dl.textContent='Open raw'; dl.setAttribute('aria-label','Open raw file in new tab');
+        right.appendChild(dl);
+        row.appendChild(left); row.appendChild(right);
+        div.appendChild(row);
       }
+      folderContents.appendChild(div);
+    }
+    if(node.folders.length===0 && node.files.length===0){ folderContents.innerHTML = '<div class="message">This folder is empty.</div>'; }
+  }
+
+  // Render mini listing for inline expansion (lazy)
+  function renderMini(path, container){
+    const node = treeMap[path];
+    if(!node) { container.innerHTML = '<div class="message">(empty)</div>'; return; }
+    const frag = document.createDocumentFragment();
+    if(node.folders.length){
+      const ul = document.createElement('ul'); ul.style.listStyle='none'; ul.style.padding='0';
+      for(const f of node.folders){
+        const li = document.createElement('li'); li.style.padding='8px 0';
+        const btn = document.createElement('button'); btn.className='back-btn'; btn.textContent='▸'; btn.addEventListener('click', ()=>{
+          // expand deeper
+          if(li.querySelector('.child-contents')){ li.removeChild(li.querySelector('.child-contents')); btn.textContent='▸'; } else { btn.textContent='▾'; const c=document.createElement('div'); c.style.marginLeft='20px'; renderMini(nodePath(path,f), c); li.appendChild(c); }
+        });
+        const span = document.createElement('span'); span.textContent='📁 '+f.replace(/\/$/,''); span.style.marginLeft='8px'; span.tabIndex=0; span.addEventListener('click', ()=> openFolder(nodePath(path,f)));
+        span.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFolder(nodePath(path,f)); } });
+        li.appendChild(btn); li.appendChild(span); ul.appendChild(li);
+      }
+      frag.appendChild(ul);
+    }
+    if(node.files.length){
+      const ul = document.createElement('ul'); ul.style.listStyle='none'; ul.style.padding='0';
+      for(const file of node.files){
+        const li = document.createElement('li'); li.style.padding='6px 0';
+        const link = document.createElement('span'); link.textContent = file.name; link.tabIndex=0; link.style.cursor='pointer'; link.addEventListener('click', ()=> openFile(file.path)); link.addEventListener('keydown',(e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openFile(file.path); } });
+        li.appendChild(link); ul.appendChild(li);
+      }
+      frag.appendChild(ul);
+    }
+    container.appendChild(frag);
+  }
+
+  function nodePath(parent, child){
+    // parent may be '' or 'a/b/' ; child may be 'c/'
+    return (parent || '') + child;
+  }
+
+  function detectFileType(name){
+    const low = name.toLowerCase();
+    if(low.endsWith('.pdf')) return 'PDF Document';
+    if(low.endsWith('.md') || low.endsWith('.markdown')) return 'Markdown';
+    if(low.endsWith('.txt')) return 'Text File';
+    if(low.match(/\.(js|py|r|java|c|cpp|json|xml|csv|html|css)$/)) return 'Code/Text File';
+    return 'File';
+  }
+
+  // Open file: for PDFs open iframe modal, for text fetch and show text
+  async function openFile(path){
+    const url = RAW_BASE + path;
+    const name = path.split('/').pop();
+    if(name.toLowerCase().endsWith('.pdf')){
+      openModal(name, url, true);
+      return;
+    }
+    try{
+      modalTitle.textContent = name;
+      modalBody.innerHTML = '<div class="message">Loading file preview…</div>';
+      openModal(name, document.createElement('div'), false);
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Failed to fetch file');
+      const text = await res.text();
+      const pre = document.createElement('pre'); pre.style.whiteSpace='pre-wrap'; pre.style.fontSize='13px'; pre.textContent = text;
+      modalBody.innerHTML = '';
+      modalBody.appendChild(pre);
+    }catch(err){
+      modalBody.innerHTML = '<div class="message">Unable to load preview. Open raw to download.</div>';
+    }
+  }
+
+  // Simple search within current folder - filters displayed file/folder names
+  function applySearch(term){
+    term = term.trim().toLowerCase();
+    if(currentPath === ''){
+      // filter top-level cards
+      const cards = Array.from(foldersEl.children);
+      cards.forEach(c=>{
+        const name = c.textContent.toLowerCase();
+        c.style.display = name.includes(term) ? '' : 'none';
+      });
+      return;
+    }
+    // else filter folderContents listings
+    // we will re-render but hide non-matching entries
+    renderFolderContents(currentPath);
+    if(!term) return;
+    // hide folder items and files that don't match
+    const items = folderContents.querySelectorAll('.folder-item, .file-row');
+    items.forEach(it=>{
+      const txt = it.textContent.toLowerCase();
+      it.style.display = txt.includes(term) ? '' : 'none';
     });
+  }
 
-    // Ensure hash changes when opening a folder by clicking the desktop folder button
-    // (Handled by openPath above)
+  searchInput.addEventListener('input', (e)=> applySearch(e.target.value));
 
-    // End of script
+  backToMainBtn.addEventListener('click', showMain);
+
+  // escape HTML helper
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // Initialize app
+  (async function init(){
+    statusEl.textContent = 'Loading repository structure…';
+    const tree = await fetchTree();
+    if(!tree){ statusEl.textContent = 'Unable to load repository tree.'; return; }
+    treeMap = buildTreeMap(tree);
+    renderTopLevel();
+    statusEl.textContent = '';
+  })();
+
+  // End of script
   </script>
 </body>
 </html>
-```
