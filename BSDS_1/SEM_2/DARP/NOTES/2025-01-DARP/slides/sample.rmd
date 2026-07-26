@@ -1,0 +1,147 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, fig.width=10, fig.height=4)
+library(lattice)
+```
+
+For this quiz, we will use the UK 2024 (provisional) road safety vehicles data available from 
+
+<https://www.data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-accidents-safety-data>
+
+
+or [here](https://www.data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-accidents-safety-data).
+
+Use the following code to read the data in R from a copy of the data at the course website.
+
+<!-- Copy of
+
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-vehicle-provisional-mid-year-unvalidated-2024.csv
+
+-->
+
+```{r}
+DATALOC <- "https://deepayan.github.io/BSDS/2025-01-DARP/slides/data/rcs2024.csv"
+rcs2024 <- read.csv(DATALOC)
+```
+
+Each row in the dataset describes a vehicle involved in a
+collision. Multiple vehicles may be involved in a single
+collision. The `collision_index` variable is an identifier for the
+collision a particular vehicle was involved in.
+
+The `sex_of_driver` variable is coded as an integer, with values 1 =
+Male, 2 = Female, 3 = Not known. Missing values are coded as $-1$.
+
+
+__Question 1__: Identify the **specific** collision _that_ involved the
+largest number of vehicles (hint: the number of vehicles involved was
+25). For this collision,
+
+```{r,echo=FALSE}
+veh_per_collision <- xtabs(~ collision_index, rcs2024) |> array2DF()
+i <- which.max(veh_per_collision$Value)
+max_collision_index <- veh_per_collision[i, "collision_index"]
+max_collision_index
+```
+
+
+* How many of the drivers were Male?
+
+```{r,echo=FALSE}
+df25 <- dplyr::filter(rcs2024, collision_index == max_collision_index)
+tab25 <- xtabs(~ sex_of_driver, df25)
+```
+
+```{r}
+tab25["1"]
+```
+
+
+* How many of the drivers were Female?
+
+```{r}
+tab25["2"]
+```
+
+
+* Ignoring missing values, what was the average age of the Male drivers?
+
+```{r}
+df25 |> dplyr::filter(age_of_driver != -1) |> 
+  dplyr::group_by(sex_of_driver) |> dplyr::summarise(mean(age_of_driver))
+```
+
+
+* Ignoring missing values, what was the average age of the Female drivers?
+
+
+
+__Question 2__: Obtain the subset of the data for collisions that
+involved exactly one vehicle.
+
+* How many such collisions are recorded?
+
+* For what proportion of such collisions is the age of the driver missing?
+
+* For what proportion of such collisions is the sex of the driver Not known?
+
+* Ignoring missing values, what was the average age of the Male drivers in such collisions?
+
+* Ignoring missing values, What was the average age of the Female drivers in such collisions?
+
+* Ignoring missing values, What was the average age of drivers with
+  sex Not Known in such collisions?
+
+* What is the most frequent vehicle type involved in such collisions?
+  The meaning of the integer codes of the `vehicle_type` variable is
+  explained in the attached form.
+
+* What is the _least_ frequent vehicle type involved in such
+  collisions? Exclude all vehicle types that were not involved in any
+  recorded accident.
+
+
+
+
+__Question 3__: Using graphical tools you have learned about, study the
+empirical distribution of `age_of_driver` for different values of
+`sex_of_driver` (in the entire dataset). Briefly summarize your
+observations, keeping the following underlying questions in mind:
+
+```{r}
+dall <- rcs2024[c("age_of_driver", "sex_of_driver")] |> 
+  subset(age_of_driver != -1  & sex_of_driver != -1)
+```
+
+* Does the age distribution of drivers involved in accidents vary by their sex?
+
+```{r, fig.width=9, fig.height=4}
+xtabs(~ age_of_driver + sex_of_driver, dall) |> array2DF() |> 
+  lattice::barchart(Value ~ age_of_driver | sex_of_driver, origin = 0)
+```
+
+
+```{r}
+lattice::histogram(~ age_of_driver | factor(sex_of_driver), dall,
+                   scales = list(alternating = FALSE))
+```
+
+```{r}
+qqmath(~ age_of_driver, dall,
+       groups = factor(sex_of_driver), grid = TRUE,
+       auto.key = TRUE, 
+       par.settings = simpleTheme(pch = ".", cex = 3))
+```
+
+
+
+* If we wanted to summarize the age distributions by sex, what would
+  be an appropriate measure (e.g., sample mean, sample median, something else?)
+
+```{r}
+library(ggplot2)
+library(plotly)
+library(htmlwidgets)
+p <- ggplot(airquality) + geom_point(aes(x = Temp, y = Ozone))
+ggplotly(p)
+```
+

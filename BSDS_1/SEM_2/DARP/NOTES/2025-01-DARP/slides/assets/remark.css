@@ -1,0 +1,153 @@
+
+@import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+@import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+/* For better printing (and PDF export) */
+
+@page {
+    size: 1210px 681px;
+    margin: 0;
+}
+
+@media print {
+    .remark-slide-scaler {
+	width: 100% !important;
+	height: 100% !important;
+	transform: scale(1) !important;
+	top: 0 !important;
+	left: 0 !important;
+    }
+    h1 {
+	font-size: 80%;
+    }
+}
+
+/* .remark-code, li */
+/* { */
+/*     width: 66%; */
+/* } */
+img
+{
+    /* width: 65%; */
+    width: 90%;
+    margin-left: 5%;
+}
+table {
+    /* width: 60%; */
+    width: 90%;
+    margin-left: 0px;
+}
+
+
+
+body
+{
+    font-family: 'Droid Serif';
+}
+
+.remark-slide-content
+{
+    /* background-color: #d6d6d6; #d4d3d0 right of face  */
+    /* background-image: linear-gradient(to right, #ffffff, #ffffff, #ffffff, #d6d6d6, #d6d6d6); */
+    /* background-image: url("slide-background.png") */
+}
+
+h1, h2, h3
+{
+    font-family: 'Yanone Kaffeesatz';
+    font-weight: normal;
+}
+h1, a
+{
+    color: #2a76dd;
+}
+.remark-code, .remark-inline-code
+{
+    font-family: 'Ubuntu Mono';
+}
+pre
+{
+    margin-left: 2em;
+}
+code.r
+{
+    border-left: 10px solid #6ca0e8;
+    background-image: linear-gradient(to right, #6ca0e830, #6ca0e820, #6ca0e801);
+    padding-left: 20px;
+}
+code.python
+{
+    border-left: 10px solid #6ca840;
+    background-image: linear-gradient(to right, #6ca84030, #6ca84020, #6ca84001);
+    padding-left: 20px;
+}
+code.remark-code
+{
+    color: #3c50e8;
+}
+
+
+
+
+.algorithm
+{
+    margin-left: 2em;
+    white-space: pre;
+    !border-left: 10px solid #6ca0e8;
+    padding-left: 20px;
+    font-family: 'Ubuntu Mono';
+    background: #eeeeee;
+    padding-bottom: 0px;
+    padding-top: 0px;
+    border-top: 2px solid #6ca0e8;
+    border-bottom: 2px solid #6ca0e8;
+}
+.algorithm .name
+{
+    display: block;
+    !border-bottom: 2px solid #6ca0e8;
+    color: #3c50e8;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    font-weight: bold;
+}
+.scrollable300
+{
+    height: 300px;
+    overflow: scroll;
+}
+.scrollable400
+{
+    height: 400px;
+    overflow: scroll;
+}
+.scrollable500
+{
+    height: 500px;
+    overflow: scroll;
+}
+
+
+.theorem, .defn, .corollary, .lemma
+{
+    margin-left: 2em;
+    padding-left: 20px;
+    background: #eeeeee;
+    padding-bottom: 0px;
+    padding-top: 0px;
+    !border-top: 2px solid #6ca0e8;
+    !border-bottom: 2px solid #6ca0e8;
+}
+
+
+.right-half
+{
+    width: 40%;
+    float: right
+}
+
+.left-half
+{
+    width: 50%;
+}
