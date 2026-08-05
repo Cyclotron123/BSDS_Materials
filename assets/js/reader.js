@@ -100,7 +100,7 @@
 
   const getScaleForMode = (mode = state.zoomMode) => {
     if (!state.pdfDoc || !state.baseViewport) return state.currentScale;
-    const containerWidth = Math.max(320, els.viewerWrap.clientWidth - 32);
+    const containerWidth = Math.max(320, els.viewer.clientWidth - 32);
     const containerHeight = Math.max(420, els.viewerWrap.clientHeight - 40);
 
     const baseWidth = state.baseViewport.width;
