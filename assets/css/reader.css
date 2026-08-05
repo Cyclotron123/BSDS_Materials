@@ -112,12 +112,19 @@ button, input {
 }
 
 .viewer {
-  width: min(100%, 1200px);
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 22px;
   padding: 0 16px;
+}
+
+.page {
+  width: 100%;
+  max-width: 1168px;
 }
 
 .page {
