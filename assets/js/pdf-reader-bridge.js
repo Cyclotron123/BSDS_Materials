@@ -1,7 +1,7 @@
 (() => {
   const isPdfPath = (path) => typeof path === 'string' && /\.pdf(\?|#|$)/i.test(path);
 
-  const toReaderUrl = (path) => `reader.html?file=${encodeURIComponent(path)}`;
+  const toReaderUrl = (path) => `viewer.html?file=${encodeURIComponent(path)}`;
 
   function extractRepoPathFromUrl(url) {
     try {

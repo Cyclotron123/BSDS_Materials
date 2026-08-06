@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Lumina PDF</title>
+  <meta name="description" content="Lumina PDF – Modern academic PDF reader for BSDS Materials" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/viewer.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="js/viewer.js" type="module" defer></script>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Toolbar -->
+    <header class="toolbar" role="toolbar" aria-label="PDF controls">
+      <div class="toolbar-left">
+        <button id="btn-back" class="btn" title="Back to library" aria-label="Back">←</button>
+        <span id="doc-title" class="doc-title">Loading…</span>
+      </div>
+
+      <div class="toolbar-center">
+        <button id="btn-prev" class="btn" title="Previous page (↑)" aria-label="Previous page">▲</button>
+        <div class="page-control">
+          <input id="page-input" type="number" min="1" value="1" aria-label="Page number" />
+          <span id="page-total" class="muted">/ 0</span>
+        </div>
+        <button id="btn-next" class="btn" title="Next page (↓)" aria-label="Next page">▼</button>
+
+        <span class="divider"></span>
+
+        <button id="btn-zoom-out" class="btn" title="Zoom out (−)" aria-label="Zoom out">−</button>
+        <span id="zoom-label" class="zoom-label">100%</span>
+        <button id="btn-zoom-in" class="btn" title="Zoom in (+)" aria-label="Zoom in">+</button>
+        <button id="btn-fit-width" class="btn wide" title="Fit width (Ctrl+0)">Fit W</button>
+        <button id="btn-fit-page" class="btn wide" title="Fit page">Fit P</button>
+      </div>
+
+      <div class="toolbar-right">
+        <div class="search-box">
+          <input id="search-input" type="search" placeholder="Search…" aria-label="Search in PDF" autocomplete="off" />
+          <button id="btn-search-prev" class="btn icon" title="Previous match">‹</button>
+          <button id="btn-search-next" class="btn icon" title="Next match">›</button>
+        </div>
+        <button id="btn-theme" class="btn" title="Cycle theme (Ctrl+D)" aria-label="Theme">☾</button>
+        <button id="btn-sidebar" class="btn" title="Toggle sidebar" aria-label="Sidebar">☰</button>
+        <button id="btn-fullscreen" class="btn" title="Fullscreen (F11)" aria-label="Fullscreen">⛶</button>
+        <button id="btn-download" class="btn" title="Download" aria-label="Download">↓</button>
+        <button id="btn-print" class="btn" title="Print (Ctrl+P)" aria-label="Print">⎙</button>
+      </div>
+    </header>
+
+    <!-- Main area -->
+    <div class="main">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="sidebar hidden" aria-label="Sidebar">
+        <div class="sidebar-tabs">
+          <button data-tab="thumbs" class="tab active" title="Thumbnails">Pages</button>
+          <button data-tab="outline" class="tab" title="Outline">Outline</button>
+          <button data-tab="bookmarks" class="tab" title="Bookmarks">★</button>
+        </div>
+        <div id="sidebar-content" class="sidebar-content">
+          <div id="panel-thumbs" class="panel"></div>
+          <div id="panel-outline" class="panel hidden">
+            <p class="empty">No outline available</p>
+          </div>
+          <div id="panel-bookmarks" class="panel hidden">
+            <p class="empty">Bookmarks coming soon</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Viewer -->
+      <main id="viewer-wrap" class="viewer-wrap">
+        <div id="viewer" class="viewer" aria-label="PDF pages"></div>
+      </main>
+    </div>
+
+    <!-- Status bar -->
+    <footer id="status" class="status">Ready</footer>
+  </div>
+</body>
+</html>
