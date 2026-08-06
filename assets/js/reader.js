@@ -154,6 +154,7 @@
         rendering: null,
         viewport: null,
         textContent: null,
+        textSpans: [], // for search
       };
     }
     return state.pageStates[pageNum];
@@ -186,32 +187,76 @@
     return page;
   };
 
-  // ========== IMPROVED TEXT LAYER (official PDF.js TextLayer) ==========
+  // ========== ROBUST TEXT LAYER (compatible with PDF.js 3.11) ==========
+  // Uses the classic renderTextLayer when available, falls back to high-quality manual spans.
   const buildTextLayer = async (pageNum, page, viewport) => {
     const stateObj = getPageState(pageNum);
     const layer = stateObj.textLayer;
     if (!layer) return;
 
+    // Clear previous
     layer.innerHTML = '';
-    layer.style.width = `${viewport.width}px`;
-    layer.style.height = `${viewport.height}px`;
+    layer.style.width = Math.floor(viewport.width) + 'px';
+    layer.style.height = Math.floor(viewport.height) + 'px';
 
     const textContent = await page.getTextContent();
     stateObj.textContent = textContent;
+    stateObj.textSpans = [];
 
-    // Official PDF.js TextLayer (v3.11)
-    const textLayer = new pdfjsLib.TextLayer({
-      textContentSource: textContent,
-      container: layer,
-      viewport,
-    });
+    // Prefer the official renderTextLayer if it exists (PDF.js 3.11 has it)
+    if (typeof pdfjsLib.renderTextLayer === 'function') {
+      try {
+        const textDivs = [];
+        const task = pdfjsLib.renderTextLayer({
+          textContentSource: textContent,
+          container: layer,
+          viewport: viewport,
+          textDivs: textDivs,
+        });
+        await task.promise;
+        stateObj.textSpans = textDivs;
+        return;
+      } catch (e) {
+        console.warn('renderTextLayer failed, falling back to manual layer', e);
+        layer.innerHTML = '';
+      }
+    }
 
-    await textLayer.render();
+    // ========== High-quality manual fallback ==========
+    // Much more accurate than the original implementation
+    for (const item of textContent.items) {
+      if (!item.str || !item.str.trim()) continue;
+
+      const span = document.createElement('span');
+      span.textContent = item.str;
+
+      // Apply the full transform from PDF.js
+      const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+
+      // Font height from the transform matrix
+      const fontHeight = Math.hypot(tx[2], tx[3]);
+      const fontAscent = fontHeight; // good enough for most PDFs
+
+      span.style.left = tx[4] + 'px';
+      span.style.top = (tx[5] - fontAscent) + 'px';
+      span.style.fontSize = fontHeight + 'px';
+      span.style.fontFamily = 'sans-serif';
+      span.style.transformOrigin = '0% 0%';
+
+      // Horizontal scaling to match the actual glyph width
+      const scaleX = item.width ? (item.width * viewport.scale) / (Math.hypot(tx[0], tx[1]) || 1) : 1;
+      if (Math.abs(scaleX - 1) > 0.01) {
+        span.style.transform = `scaleX(${scaleX})`;
+      }
+
+      layer.appendChild(span);
+      stateObj.textSpans.push(span);
+    }
   };
 
   // ========== IMPROVED SEARCH ==========
   const clearHighlights = () => {
-    document.querySelectorAll('.text-layer .highlight').forEach(el => {
+    document.querySelectorAll('.text-layer span.highlight').forEach(el => {
       el.classList.remove('highlight', 'selected');
     });
   };
@@ -233,32 +278,36 @@
       let stateObj = getPageState(pageNum);
 
       if (!stateObj.textContent) {
-        const page = await state.pdfDoc.getPage(pageNum);
-        stateObj.textContent = await page.getTextContent();
+        try {
+          const page = await state.pdfDoc.getPage(pageNum);
+          stateObj.textContent = await page.getTextContent();
+        } catch (e) {
+          continue;
+        }
       }
 
       const items = stateObj.textContent.items;
       let pageText = '';
-      const itemRanges = [];
+      const ranges = []; // {start, end, itemIndex}
 
-      for (const item of items) {
+      for (let i = 0; i < items.length; i++) {
         const start = pageText.length;
-        pageText += item.str;
-        itemRanges.push({ start, end: pageText.length, str: item.str });
+        pageText += items[i].str;
+        ranges.push({ start, end: pageText.length, itemIndex: i });
       }
 
       const lower = pageText.toLowerCase();
-      let fromIndex = 0;
-      let matchPos;
+      let from = 0;
+      let pos;
 
-      while ((matchPos = lower.indexOf(state.searchTerm, fromIndex)) !== -1) {
+      while ((pos = lower.indexOf(state.searchTerm, from)) !== -1) {
         state.searchMatches.push({
           page: pageNum,
-          start: matchPos,
-          end: matchPos + state.searchTerm.length,
-          itemRanges
+          start: pos,
+          end: pos + state.searchTerm.length,
+          ranges
         });
-        fromIndex = matchPos + 1;
+        from = pos + 1;
       }
     }
 
@@ -273,8 +322,8 @@
   };
 
   const highlightCurrentMatch = async (scroll = true) => {
-    // Remove previous selected class
-    document.querySelectorAll('.text-layer .highlight.selected')
+    // Remove previous selected
+    document.querySelectorAll('.text-layer span.highlight.selected')
       .forEach(el => el.classList.remove('selected'));
 
     if (state.currentMatchIndex < 0 || !state.searchMatches.length) return;
@@ -282,20 +331,20 @@
     const match = state.searchMatches[state.currentMatchIndex];
     const pageNum = match.page;
 
-    // Ensure the page is rendered
+    // Make sure the page is rendered so spans exist
     await renderPage(pageNum);
     const stateObj = getPageState(pageNum);
     if (!stateObj.textLayer) return;
 
-    // Mark spans that overlap the match range
+    // Find spans that overlap the character range of the match
     const spans = stateObj.textLayer.querySelectorAll('span');
-    let charCount = 0;
+    let charPos = 0;
 
     spans.forEach(span => {
-      const text = span.textContent || '';
-      const start = charCount;
-      const end = charCount + text.length;
-      charCount = end;
+      const len = (span.textContent || '').length;
+      const start = charPos;
+      const end = charPos + len;
+      charPos = end;
 
       if (end > match.start && start < match.end) {
         span.classList.add('highlight');
@@ -305,7 +354,7 @@
 
     if (scroll) {
       scrollToPage(pageNum);
-      const selected = stateObj.textLayer.querySelector('.highlight.selected');
+      const selected = stateObj.textLayer.querySelector('span.highlight.selected');
       if (selected) {
         selected.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -342,8 +391,8 @@
       const outputScale = window.devicePixelRatio || 1;
       canvas.width = Math.floor(viewport.width * outputScale);
       canvas.height = Math.floor(viewport.height * outputScale);
-      canvas.style.width = `${viewport.width}px`;
-      canvas.style.height = `${viewport.height}px`;
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
 
       const renderCtx = {
         canvasContext: ctx,
@@ -351,32 +400,33 @@
         transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
       };
 
-      stateObj.container.style.width = `${viewport.width}px`;
-      stateObj.container.style.height = `${viewport.height}px`;
-      stateObj.container.style.minHeight = `${viewport.height}px`;
+      stateObj.container.style.width = viewport.width + 'px';
+      stateObj.container.style.height = viewport.height + 'px';
+      stateObj.container.style.minHeight = viewport.height + 'px';
 
-      stateObj.textLayer.style.width = `${viewport.width}px`;
-      stateObj.textLayer.style.height = `${viewport.height}px`;
+      stateObj.textLayer.style.width = viewport.width + 'px';
+      stateObj.textLayer.style.height = viewport.height + 'px';
 
       canvas.classList.remove('hidden');
-      stateObj.container.querySelector('.page-loading')?.remove();
+      const loadingEl = stateObj.container.querySelector('.page-loading');
+      if (loadingEl) loadingEl.remove();
 
       const renderTask = page.render(renderCtx);
       await renderTask.promise;
 
-      // Use the improved official text layer
+      // Build accurate text layer
       await buildTextLayer(pageNum, page, viewport);
 
       stateObj.renderedScale = state.currentScale;
       state.loadingDone = Math.max(state.loadingDone, pageNum);
       if (taskToken === state.renderToken) updateProgress();
 
-      // Re-apply search highlights if needed
+      // Re-apply highlights if this page has matches
       if (state.searchTerm && state.searchMatches.some(m => m.page === pageNum)) {
         highlightCurrentMatch(false);
       }
     })().catch(err => {
-      console.error(err);
+      console.error('Render error page', pageNum, err);
       stateObj.container.innerHTML =
         `<div class="page-loading">Could not render page ${pageNum}.</div>`;
     }).finally(() => {
@@ -552,7 +602,7 @@
     let searchTimer = null;
     els.searchInput.addEventListener('input', () => {
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => runSearch(els.searchInput.value), 250);
+      searchTimer = setTimeout(() => runSearch(els.searchInput.value), 280);
     });
     els.searchPrev.addEventListener('click', () => jumpToSearchMatch(-1));
     els.searchNext.addEventListener('click', () => jumpToSearchMatch(1));

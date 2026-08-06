@@ -144,7 +144,7 @@ button, input {
   transform-origin: top center;
 }
 
-/* ========== IMPROVED TEXT LAYER ========== */
+/* ========== TEXT LAYER (works with PDF.js 3.11) ========== */
 .text-layer {
   position: absolute;
   left: 0;
@@ -152,45 +152,45 @@ button, input {
   right: 0;
   bottom: 0;
   overflow: hidden;
-  opacity: 1;
   line-height: 1;
+  opacity: 1;
+  pointer-events: auto;
+  transform-origin: 0 0;
+  z-index: 2;
   -webkit-text-size-adjust: none;
   -moz-text-size-adjust: none;
   text-size-adjust: none;
-  forced-color-adjust: none;
-  transform-origin: 0 0;
-  z-index: 2;
-  pointer-events: auto;
 }
 
-.text-layer span,
-.text-layer br {
-  color: transparent;
+.text-layer span {
   position: absolute;
   white-space: pre;
-  cursor: text;
   transform-origin: 0% 0%;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  cursor: text;
+  user-select: text;
+  line-height: 1;
 }
 
-/* Selection */
-.text-layer ::selection {
-  background: rgba(37, 99, 235, 0.28);
-  color: transparent;
+/* Selection highlight */
+.text-layer span::selection {
+  background: rgba(37, 99, 235, 0.32);
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
-.text-layer ::-moz-selection {
-  background: rgba(37, 99, 235, 0.28);
-  color: transparent;
+.text-layer span::-moz-selection {
+  background: rgba(37, 99, 235, 0.32);
+  color: transparent !important;
 }
 
 /* Search highlights */
-.text-layer .highlight {
-  margin: -1px;
-  padding: 1px;
-  background-color: rgba(255, 215, 0, 0.45);
+.text-layer span.highlight {
+  background: rgba(255, 215, 0, 0.45);
   border-radius: 2px;
 }
-.text-layer .highlight.selected {
-  background-color: rgba(255, 140, 0, 0.7);
+.text-layer span.highlight.selected {
+  background: rgba(255, 140, 0, 0.72);
 }
 
 .page-loading {
