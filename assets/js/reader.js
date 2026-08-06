@@ -35,7 +35,7 @@
     fileName: '',
     pageCount: 0,
     currentScale: 1,
-    zoomMode: 'fit-width', // fit-width | fit-page | custom
+    zoomMode: 'fit-width',
     renderToken: 0,
     pageStates: [],
     baseViewport: null,
@@ -47,7 +47,6 @@
     darkMode: false,
     initialPage: 1,
     loadingDone: 0,
-    textCache: new Map(),
   };
 
   const sanitizeFilePath = (raw) => {
@@ -111,7 +110,6 @@
       const scaleH = containerHeight / baseHeight;
       return Math.max(MIN_SCALE, Math.min(MAX_SCALE, Math.min(scaleW, scaleH) * 0.97));
     }
-    // default fit-width
     return Math.max(MIN_SCALE, Math.min(MAX_SCALE, containerWidth / baseWidth));
   };
 
@@ -146,13 +144,6 @@
     setStatus(`Rendering pages… ${state.loadingDone}/${state.pageCount} (${pct}%)`);
   };
 
-  const escapeHtml = (s) => s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
   const getPageState = (pageNum) => {
     if (!state.pageStates[pageNum]) {
       state.pageStates[pageNum] = {
@@ -162,7 +153,6 @@
         renderedScale: 0,
         rendering: null,
         viewport: null,
-        textItems: null,
         textContent: null,
       };
     }
@@ -196,51 +186,149 @@
     return page;
   };
 
-  const clearTextLayer = (layer) => {
-    while (layer.firstChild) layer.removeChild(layer.firstChild);
-  };
-
-  const buildTextLayer = (pageNum, viewport, textContent, query = '') => {
+  // ========== IMPROVED TEXT LAYER (official PDF.js TextLayer) ==========
+  const buildTextLayer = async (pageNum, page, viewport) => {
     const stateObj = getPageState(pageNum);
     const layer = stateObj.textLayer;
     if (!layer) return;
 
-    clearTextLayer(layer);
+    layer.innerHTML = '';
+    layer.style.width = `${viewport.width}px`;
+    layer.style.height = `${viewport.height}px`;
 
-    const q = query.trim().toLowerCase();
-    const hasQuery = !!q;
+    const textContent = await page.getTextContent();
+    stateObj.textContent = textContent;
 
-    for (const item of textContent.items) {
-      if (!item.str || !item.str.trim()) continue;
+    // Official PDF.js TextLayer (v3.11)
+    const textLayer = new pdfjsLib.TextLayer({
+      textContentSource: textContent,
+      container: layer,
+      viewport,
+    });
 
-      const span = document.createElement('span');
-      const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-      const fontHeight = Math.hypot(tx[2], tx[3]) || 1;
-      const fontWidth = Math.hypot(tx[0], tx[1]) || 1;
-      span.textContent = item.str;
-      span.style.left = `${tx[4]}px`;
-      span.style.top = `${tx[5] - fontHeight}px`;
-      span.style.fontSize = `${Math.max(1, fontHeight)}px`;
-      span.style.fontFamily = item.fontName ? 'sans-serif' : 'inherit';
-      span.style.transform = `scaleX(${Math.max(0.25, item.width ? (item.width / fontWidth) : 1)})`;
-      span.dataset.raw = item.str.toLowerCase();
+    await textLayer.render();
+  };
 
-      if (hasQuery && span.dataset.raw.includes(q)) {
-        const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
-        span.innerHTML = escapeHtml(item.str).replace(regex, '<mark>$1</mark>');
-      } else {
-        span.textContent = item.str;
+  // ========== IMPROVED SEARCH ==========
+  const clearHighlights = () => {
+    document.querySelectorAll('.text-layer .highlight').forEach(el => {
+      el.classList.remove('highlight', 'selected');
+    });
+  };
+
+  const runSearch = async (term) => {
+    state.searchTerm = (term || '').trim().toLowerCase();
+    state.searchMatches = [];
+    state.currentMatchIndex = -1;
+    clearHighlights();
+
+    if (!state.searchTerm) {
+      setStatus(`Loaded ${state.pageCount} pages.`);
+      return;
+    }
+
+    setStatus(`Searching “${state.searchTerm}”…`);
+
+    for (let pageNum = 1; pageNum <= state.pageCount; pageNum++) {
+      let stateObj = getPageState(pageNum);
+
+      if (!stateObj.textContent) {
+        const page = await state.pdfDoc.getPage(pageNum);
+        stateObj.textContent = await page.getTextContent();
       }
 
-      layer.appendChild(span);
+      const items = stateObj.textContent.items;
+      let pageText = '';
+      const itemRanges = [];
+
+      for (const item of items) {
+        const start = pageText.length;
+        pageText += item.str;
+        itemRanges.push({ start, end: pageText.length, str: item.str });
+      }
+
+      const lower = pageText.toLowerCase();
+      let fromIndex = 0;
+      let matchPos;
+
+      while ((matchPos = lower.indexOf(state.searchTerm, fromIndex)) !== -1) {
+        state.searchMatches.push({
+          page: pageNum,
+          start: matchPos,
+          end: matchPos + state.searchTerm.length,
+          itemRanges
+        });
+        fromIndex = matchPos + 1;
+      }
+    }
+
+    if (state.searchMatches.length === 0) {
+      setStatus(`No matches for “${state.searchTerm}”.`);
+      return;
+    }
+
+    state.currentMatchIndex = 0;
+    await highlightCurrentMatch(true);
+    setStatus(`${state.searchMatches.length} match${state.searchMatches.length === 1 ? '' : 'es'} found.`);
+  };
+
+  const highlightCurrentMatch = async (scroll = true) => {
+    // Remove previous selected class
+    document.querySelectorAll('.text-layer .highlight.selected')
+      .forEach(el => el.classList.remove('selected'));
+
+    if (state.currentMatchIndex < 0 || !state.searchMatches.length) return;
+
+    const match = state.searchMatches[state.currentMatchIndex];
+    const pageNum = match.page;
+
+    // Ensure the page is rendered
+    await renderPage(pageNum);
+    const stateObj = getPageState(pageNum);
+    if (!stateObj.textLayer) return;
+
+    // Mark spans that overlap the match range
+    const spans = stateObj.textLayer.querySelectorAll('span');
+    let charCount = 0;
+
+    spans.forEach(span => {
+      const text = span.textContent || '';
+      const start = charCount;
+      const end = charCount + text.length;
+      charCount = end;
+
+      if (end > match.start && start < match.end) {
+        span.classList.add('highlight');
+        if (scroll) span.classList.add('selected');
+      }
+    });
+
+    if (scroll) {
+      scrollToPage(pageNum);
+      const selected = stateObj.textLayer.querySelector('.highlight.selected');
+      if (selected) {
+        selected.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   };
 
+  const jumpToSearchMatch = (direction) => {
+    if (!state.searchMatches.length) return;
+    state.currentMatchIndex =
+      (state.currentMatchIndex + direction + state.searchMatches.length) %
+      state.searchMatches.length;
+    highlightCurrentMatch(true);
+    setStatus(`Match ${state.currentMatchIndex + 1} of ${state.searchMatches.length}`);
+  };
+
+  // ========== RENDER PAGE ==========
   const renderPage = async (pageNum, { force = false } = {}) => {
     const stateObj = getPageState(pageNum);
     if (!state.pdfDoc || !stateObj.container) return;
     if (stateObj.rendering) return stateObj.rendering;
-    if (!force && stateObj.renderedScale === state.currentScale && stateObj.viewport) return;
+    if (!force && stateObj.renderedScale === state.currentScale && stateObj.viewport) {
+      return;
+    }
 
     const taskToken = ++state.renderToken;
     stateObj.rendering = (async () => {
@@ -262,33 +350,35 @@
         viewport,
         transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
       };
+
       stateObj.container.style.width = `${viewport.width}px`;
-stateObj.container.style.height = `${viewport.height}px`;
-stateObj.container.style.minHeight = `${viewport.height}px`;
+      stateObj.container.style.height = `${viewport.height}px`;
+      stateObj.container.style.minHeight = `${viewport.height}px`;
 
-// Keep the text layer exactly the same size as the rendered page.
-stateObj.textLayer.style.width = `${viewport.width}px`;
-stateObj.textLayer.style.height = `${viewport.height}px`;
-stateObj.textLayer.style.left = "0";
-stateObj.textLayer.style.top = "0";
+      stateObj.textLayer.style.width = `${viewport.width}px`;
+      stateObj.textLayer.style.height = `${viewport.height}px`;
 
-canvas.classList.remove('hidden');
+      canvas.classList.remove('hidden');
       stateObj.container.querySelector('.page-loading')?.remove();
 
       const renderTask = page.render(renderCtx);
       await renderTask.promise;
 
-      const textContent = await page.getTextContent();
-      stateObj.textContent = textContent;
-      buildTextLayer(pageNum, viewport, textContent, state.searchTerm);
+      // Use the improved official text layer
+      await buildTextLayer(pageNum, page, viewport);
 
       stateObj.renderedScale = state.currentScale;
       state.loadingDone = Math.max(state.loadingDone, pageNum);
       if (taskToken === state.renderToken) updateProgress();
-      applySearchToPage(pageNum);
-    })().catch((err) => {
+
+      // Re-apply search highlights if needed
+      if (state.searchTerm && state.searchMatches.some(m => m.page === pageNum)) {
+        highlightCurrentMatch(false);
+      }
+    })().catch(err => {
       console.error(err);
-      stateObj.container.innerHTML = `<div class="page-loading">Could not render page ${pageNum}.</div>`;
+      stateObj.container.innerHTML =
+        `<div class="page-loading">Could not render page ${pageNum}.</div>`;
     }).finally(() => {
       stateObj.rendering = null;
     });
@@ -302,14 +392,11 @@ canvas.classList.remove('hidden');
       .map((el) => Number(el.dataset.pageNumber))
       .filter(Boolean);
 
-    // Render the current page immediately and neighbors soon after.
     const candidates = new Set();
     const active = state.activePage;
     [active, active - 1, active + 1].forEach((n) => {
       if (n >= 1 && n <= state.pageCount) candidates.add(n);
     });
-
-    // Plus anything that is actually intersecting.
     visible.forEach((n) => candidates.add(n));
 
     for (const pageNum of candidates) {
@@ -355,63 +442,6 @@ canvas.classList.remove('hidden');
       els.viewer.appendChild(buildPageSkeleton(i));
     }
     observePages();
-  };
-
-  const applySearchToPage = (pageNum) => {
-    const stateObj = getPageState(pageNum);
-    if (!stateObj.textLayer || !state.searchTerm) return;
-    if (!stateObj.textContent || !stateObj.viewport) return;
-    buildTextLayer(pageNum, stateObj.viewport, stateObj.textContent, state.searchTerm);
-  };
-
-  const applySearchAll = () => {
-    for (let i = 1; i <= state.pageCount; i++) applySearchToPage(i);
-  };
-
-  const runSearch = async (term) => {
-    state.searchTerm = (term || '').trim();
-    state.searchMatches = [];
-    state.currentMatchIndex = -1;
-
-    if (!state.searchTerm) {
-      applySearchAll();
-      setStatus(`Loaded ${state.pageCount} pages.`);
-      return;
-    }
-
-    setStatus(`Searching "${state.searchTerm}"…`);
-
-    for (let i = 1; i <= state.pageCount; i++) {
-      let stateObj = getPageState(i);
-      if (!stateObj.textContent) {
-        const page = await state.pdfDoc.getPage(i);
-        stateObj.textContent = await page.getTextContent();
-        if (!stateObj.viewport) stateObj.viewport = page.getViewport({ scale: state.currentScale });
-      }
-      const text = stateObj.textContent.items.map((it) => it.str).join(' ');
-      if (text.toLowerCase().includes(state.searchTerm.toLowerCase())) {
-        state.searchMatches.push(i);
-      }
-    }
-
-    applySearchAll();
-    if (state.searchMatches.length) {
-      state.currentMatchIndex = 0;
-      const page = state.searchMatches[0];
-      scrollToPage(page);
-      setStatus(`Found ${state.searchMatches.length} matching page${state.searchMatches.length === 1 ? '' : 's'}.`);
-      els.searchInput.setAttribute('aria-label', `Search in PDF. ${state.searchMatches.length} matching pages.`);
-    } else {
-      setStatus(`No matches found for "${state.searchTerm}".`);
-    }
-  };
-
-  const jumpToSearchMatch = (direction) => {
-    if (!state.searchMatches.length) return;
-    state.currentMatchIndex = (state.currentMatchIndex + direction + state.searchMatches.length) % state.searchMatches.length;
-    const page = state.searchMatches[state.currentMatchIndex];
-    scrollToPage(page);
-    setActivePage(page);
   };
 
   const updateFitMode = () => {
@@ -522,7 +552,7 @@ canvas.classList.remove('hidden');
     let searchTimer = null;
     els.searchInput.addEventListener('input', () => {
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => runSearch(els.searchInput.value), 220);
+      searchTimer = setTimeout(() => runSearch(els.searchInput.value), 250);
     });
     els.searchPrev.addEventListener('click', () => jumpToSearchMatch(-1));
     els.searchNext.addEventListener('click', () => jumpToSearchMatch(1));
@@ -621,17 +651,14 @@ canvas.classList.remove('hidden');
     setZoom(getScaleForMode('fit-width'), { mode: 'fit-width', rerender: false });
     els.zoomLabel.textContent = `${Math.round(state.currentScale * 100)}%`;
 
-    // Render and measure pages after initial scale is known.
     state.loadingDone = 0;
     updateProgress();
 
     await renderPage(1, { force: true });
     if (state.initialPage > 1) {
-      // Pre-render the landing page too.
       await renderPage(state.initialPage, { force: true });
     }
 
-    // Render current scale for all pages lazily.
     await ensurePageVisible(state.initialPage);
     updateFitMode();
 

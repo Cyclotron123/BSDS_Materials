@@ -135,7 +135,8 @@ button, input {
 }
 
 .page-canvas {
-  
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: auto;
@@ -143,45 +144,53 @@ button, input {
   transform-origin: top center;
 }
 
+/* ========== IMPROVED TEXT LAYER ========== */
 .text-layer {
   position: absolute;
   left: 0;
   top: 0;
+  right: 0;
+  bottom: 0;
   overflow: hidden;
-  line-height: 1;
   opacity: 1;
+  line-height: 1;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
   pointer-events: auto;
-  transform-origin: top left;
 }
-.text-layer span {
+
+.text-layer span,
+.text-layer br {
+  color: transparent;
   position: absolute;
   white-space: pre;
-  transform-origin: 0 0;
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  -webkit-text-stroke: 0 transparent;
-  user-select: text;
   cursor: text;
+  transform-origin: 0% 0%;
 }
 
-/* Keep selection functional without making the invisible text layer visibly
-"pop" or change size when text is selected. */
-.text-layer span::selection {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  background: rgba(37, 99, 235, 0.25);
+/* Selection */
+.text-layer ::selection {
+  background: rgba(37, 99, 235, 0.28);
+  color: transparent;
+}
+.text-layer ::-moz-selection {
+  background: rgba(37, 99, 235, 0.28);
+  color: transparent;
 }
 
-.text-layer span::-moz-selection {
-  color: transparent !important;
-  background: rgba(37, 99, 235, 0.25);
+/* Search highlights */
+.text-layer .highlight {
+  margin: -1px;
+  padding: 1px;
+  background-color: rgba(255, 215, 0, 0.45);
+  border-radius: 2px;
 }
-
-.text-layer mark {
-  background: rgba(255, 230, 0, 0.45);
-  color: inherit;
-  border-radius: 3px;
-  padding: 0 1px;
+.text-layer .highlight.selected {
+  background-color: rgba(255, 140, 0, 0.7);
 }
 
 .page-loading {
