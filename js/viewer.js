@@ -14,6 +14,7 @@
   const SCALE_STEP = 0.15;
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 4.0;
+  const DEFAULT_SCALE = 1.25; // 125% default zoom
   const THEMES = ['dark', 'light', 'invert', 'sepia', 'amoled', 'eye-comfort', 'smart-dark'];
 
   // --------------------------------------------------
@@ -58,8 +59,8 @@
     fileName: '',
     pageCount: 0,
     currentPage: 1,
-    scale: 1,
-    zoomMode: 'fit-width', // fit-width | fit-page | custom
+    scale: DEFAULT_SCALE,
+    zoomMode: 'custom', // fit-width | fit-page | custom
     theme: localStorage.getItem('lumina-theme') || 'dark',
     sidebarOpen: false,
     searchTerm: '',
@@ -188,7 +189,7 @@
   }
 
   // --------------------------------------------------
-  // Text layer – Chrome/Edge quality selection
+  // Text layer – matches browser PDF viewer selection
   // --------------------------------------------------
   async function buildTextLayer(pageNum, page, viewport) {
     const ps = getPageState(pageNum);
@@ -198,17 +199,16 @@
     layer.innerHTML = '';
     layer.style.width = Math.floor(viewport.width) + 'px';
     layer.style.height = Math.floor(viewport.height) + 'px';
-
-    // Critical for correct font sizing & selection alignment
-    layer.style.setProperty('--total-scale-factor', viewport.scale);
+    layer.style.setProperty('--total-scale-factor', String(viewport.scale));
+    layer.style.setProperty('--scale-factor', String(viewport.scale));
 
     const textContent = await page.getTextContent({
       includeMarkedContent: true,
-      disableNormalization: true,
+      disableNormalization: false,
     });
     ps.textContent = textContent;
 
-    // Prefer official renderTextLayer (PDF.js 3.11)
+    // Official renderTextLayer with enhanceTextSelection (PDF.js 3.x)
     if (typeof pdfjsLib.renderTextLayer === 'function') {
       try {
         const textDivs = [];
@@ -217,13 +217,23 @@
           container: layer,
           viewport,
           textDivs,
+          enhanceTextSelection: false,
         });
         await task.promise;
 
-        // Required for multi-line / drag selection (same as official viewer)
-        const end = document.createElement('div');
-        end.className = 'endOfContent';
-        layer.appendChild(end);
+        // Remove empty / whitespace-only / zero-width spans (stops left-column phantom selection)
+        cleanupEmptyTextSpans(layer);
+
+        // endOfContent is required for drag-select across lines
+        let end = layer.querySelector('.endOfContent');
+        if (!end) {
+          end = document.createElement('div');
+          end.className = 'endOfContent';
+          layer.appendChild(end);
+        }
+
+        // Bind mouse events so selection expands correctly (same as official viewer)
+        bindTextLayerSelection(layer, end);
         return;
       } catch (e) {
         console.warn('renderTextLayer failed, using fallback', e);
@@ -231,42 +241,126 @@
       }
     }
 
-    // High-quality manual fallback (still very close to native)
+    // Fallback: precise manual spans
+    const styles = textContent.styles || {};
     for (const item of textContent.items) {
-      if (!item.str) continue;
+      // Skip empty / whitespace-only items (causes left-column phantom highlights)
+      if (!item.str || !item.str.trim()) continue;
+      // Skip zero-width items
+      if (item.width != null && item.width <= 0) continue;
+
       const span = document.createElement('span');
       span.textContent = item.str;
+      span.dir = item.dir || 'ltr';
 
       const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
       const fontHeight = Math.hypot(tx[2], tx[3]) || 12;
       const angle = Math.atan2(tx[1], tx[0]);
 
-      span.style.left = tx[4] + 'px';
-      span.style.top = (tx[5] - fontHeight) + 'px';
-      span.style.fontSize = fontHeight + 'px';
-      span.style.fontFamily = 'sans-serif';
+      // Use font from PDF when available
+      const fontObj = styles[item.fontName];
+      if (fontObj && fontObj.fontFamily) {
+        span.style.fontFamily = fontObj.fontFamily;
+      } else {
+        span.style.fontFamily = 'sans-serif';
+      }
+
+      span.style.left = `${tx[4]}px`;
+      span.style.top = `${tx[5] - fontHeight}px`;
+      span.style.fontSize = `${fontHeight}px`;
+      span.style.lineHeight = '1';
       span.style.transformOrigin = '0% 0%';
-      span.style.setProperty('--font-height', fontHeight + 'px');
+
+      const glyphWidth = Math.hypot(tx[0], tx[1]) || 1;
+      const scaleX = item.width ? (item.width * viewport.scale) / glyphWidth : 1;
 
       let transform = '';
-      if (angle !== 0) {
-        transform += `rotate(${angle}rad) `;
-      }
-      const scaleX = item.width
-        ? (item.width * viewport.scale) / (Math.hypot(tx[0], tx[1]) || 1)
-        : 1;
-      if (Math.abs(scaleX - 1) > 0.01) {
-        transform += `scaleX(${scaleX})`;
-      }
+      if (Math.abs(angle) > 0.001) transform += `rotate(${angle}rad) `;
+      if (Math.abs(scaleX - 1) > 0.01) transform += `scaleX(${scaleX})`;
       if (transform) span.style.transform = transform;
 
       layer.appendChild(span);
     }
 
-    // endOfContent for selection behavior
+    cleanupEmptyTextSpans(layer);
+
     const end = document.createElement('div');
     end.className = 'endOfContent';
     layer.appendChild(end);
+    bindTextLayerSelection(layer, end);
+  }
+
+  // Disable spans that create the thin left-column selection strips:
+  // empty text, pure whitespace, vertical/rotated text, and very narrow tall boxes.
+  function cleanupEmptyTextSpans(layer) {
+    const layerRect = layer.getBoundingClientRect();
+    const pageWidth = layerRect.width || 1;
+    const pageHeight = layerRect.height || 1;
+    const leftZone = pageWidth * 0.08; // leftmost 8% of the page
+
+    layer.querySelectorAll('span').forEach((span) => {
+      const text = span.textContent || '';
+      const trimmed = text.trim();
+
+      // Empty / whitespace only
+      if (!trimmed) {
+        disableSpan(span);
+        return;
+      }
+
+      const rect = span.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      const left = rect.left - layerRect.left;
+
+      // Very narrow strips (the "fine column lines")
+      if (w > 0 && w < 3) {
+        disableSpan(span);
+        return;
+      }
+
+      // Tall + narrow boxes (vertical selection columns)
+      if (w > 0 && h > 0 && h / w > 4 && w < 12) {
+        disableSpan(span);
+        return;
+      }
+
+      // Vertical / rotated text on the left margin
+      const transform = (span.style.transform || '').toLowerCase();
+      const isRotated = transform.includes('rotate') && !transform.includes('rotate(0');
+      if (isRotated && left < leftZone) {
+        disableSpan(span);
+        return;
+      }
+
+      // Single-character items stacked on the far left (common margin artifacts)
+      if (trimmed.length <= 2 && left < leftZone && w < 14) {
+        disableSpan(span);
+        return;
+      }
+    });
+  }
+
+  function disableSpan(span) {
+    span.style.pointerEvents = 'none';
+    span.style.userSelect = 'none';
+    span.style.webkitUserSelect = 'none';
+    span.setAttribute('aria-hidden', 'true');
+    span.classList.add('no-select');
+  }
+
+  // Improves multi-line selection (same technique as Mozilla's viewer)
+  function bindTextLayerSelection(layer, endOfContent) {
+    layer.addEventListener('mousedown', () => {
+      endOfContent.classList.add('active');
+    });
+    layer.addEventListener('mouseup', () => {
+      endOfContent.classList.remove('active');
+    });
+    // Also clear on mouse leave of the page
+    layer.addEventListener('mouseleave', () => {
+      endOfContent.classList.remove('active');
+    });
   }
 
   // --------------------------------------------------
@@ -543,6 +637,64 @@
   // --------------------------------------------------
   // Load PDF
   // --------------------------------------------------
+  // Build a list of candidate URLs so PDFs load on GitHub Pages, raw, and offline
+  function resolvePdfUrls(relPath) {
+    const encoded = encodeURI(relPath); // keeps / , encodes spaces
+    const urls = [];
+
+    // 1) Relative to current site (GitHub Pages or local server)
+    urls.push(encoded);
+
+    // 2) Absolute from current origin + path prefix
+    try {
+      const base = location.href.replace(/[^/]*$/, '');
+      urls.push(new URL(encoded, base).href);
+    } catch {}
+
+    // 3) raw.githubusercontent.com – both known owners
+    const owners = ['CyclotronPulsar', 'Cyclotron123'];
+    for (const owner of owners) {
+      urls.push(`https://raw.githubusercontent.com/${owner}/BSDS_Materials/main/${encoded}`);
+    }
+
+    // 4) raw.githack CDN (good CORS)
+    for (const owner of owners) {
+      urls.push(`https://raw.githack.com/${owner}/BSDS_Materials/main/${encoded}`);
+    }
+
+    // de-dupe
+    return [...new Set(urls)];
+  }
+
+  async function loadPdfDocument(relPath) {
+    const candidates = resolvePdfUrls(relPath);
+    let lastError = null;
+
+    for (const url of candidates) {
+      try {
+        setStatus(`Loading… ${url.split('/').slice(-2).join('/')}`);
+        const task = pdfjsLib.getDocument({
+          url,
+          withCredentials: false,
+          // Improve compatibility
+          isEvalSupported: false,
+        });
+        task.onProgress = (p) => {
+          if (p && p.total) {
+            setStatus(`Loading… ${Math.round((p.loaded / p.total) * 100)}%`);
+          }
+        };
+        const doc = await task.promise;
+        state.filePath = url; // keep working URL for download/print
+        return doc;
+      } catch (err) {
+        console.warn('Failed candidate', url, err && err.message);
+        lastError = err;
+      }
+    }
+    throw lastError || new Error('All load candidates failed');
+  }
+
   async function loadPdf() {
     const { file, page } = getParams();
     if (!file) {
@@ -551,21 +703,15 @@
       return;
     }
 
-    state.filePath = file;
     state.fileName = file.split('/').pop() || 'document.pdf';
     setTitle(state.fileName);
     setStatus('Loading PDF…');
 
     try {
-      if (!window.pdfjsLib) throw new Error('PDF.js failed to load');
+      if (!window.pdfjsLib) throw new Error('PDF.js failed to load from CDN');
       pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER;
 
-      const task = pdfjsLib.getDocument({ url: file });
-      task.onProgress = (p) => {
-        if (p.total) setStatus(`Loading… ${Math.round((p.loaded / p.total) * 100)}%`);
-      };
-
-      state.pdfDoc = await task.promise;
+      state.pdfDoc = await loadPdfDocument(file);
       state.pageCount = state.pdfDoc.numPages;
       els.pageTotal.textContent = `/ ${state.pageCount}`;
       els.pageInput.max = String(state.pageCount);
@@ -574,7 +720,9 @@
 
       const first = await state.pdfDoc.getPage(1);
       state.baseViewport = first.getViewport({ scale: 1 });
-      setZoom(getFitScale('fit-width'), 'fit-width');
+
+      // Default open scale = 125%
+      setZoom(DEFAULT_SCALE, 'custom');
 
       const startPage = normalizePage(page);
       await renderPage(startPage, { force: true });
@@ -582,12 +730,13 @@
 
       scrollToPage(startPage, 'auto');
       setCurrentPage(startPage);
-      setStatus(`Loaded ${state.pageCount} pages`);
+      setStatus(`Loaded ${state.pageCount} pages · 125%`);
     } catch (err) {
       console.error(err);
       setTitle('Error');
-      setStatus('Failed to load PDF – check the file path');
-      els.viewer.innerHTML = `<div class="page-loading">Could not open this document.</div>`;
+      const msg = (err && err.message) ? err.message : 'Unknown error';
+      setStatus('Failed to load PDF: ' + msg);
+      els.viewer.innerHTML = `<div class="page-loading">Could not open this document.<br><small style="opacity:.7">${msg}</small><br><br><small>Tried relative path and GitHub raw URLs.<br>File: ${file}</small></div>`;
     }
   }
 
@@ -759,7 +908,19 @@
   function boot() {
     applyTheme(state.theme);
     initControls();
-    loadPdf();
+    // Wait until PDF.js is available (script is loaded with defer)
+    const start = Date.now();
+    (function waitPdfJs() {
+      if (window.pdfjsLib) {
+        loadPdf();
+        return;
+      }
+      if (Date.now() - start > 8000) {
+        setStatus('PDF.js failed to load from CDN. Check your internet connection.');
+        return;
+      }
+      setTimeout(waitPdfJs, 50);
+    })();
   }
 
   if (document.readyState === 'loading') {

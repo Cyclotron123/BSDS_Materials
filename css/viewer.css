@@ -271,11 +271,18 @@ button, input { font: inherit; color: inherit; }
   border-radius: 4px;
   overflow: hidden;
   line-height: 0;
+  /* Allow text selection inside */
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .page-canvas {
   display: block;
   max-width: 100%;
+  /* Critical: let mouse events pass through to the text layer */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Color modes applied to canvas */
@@ -296,26 +303,23 @@ button, input { font: inherit; color: inherit; }
   font-size: 0.9rem;
 }
 
-/* ---------- Text layer (Chrome/Edge-quality selection) ---------- */
+/* ---------- Text layer (matches offline browser PDF selection) ---------- */
 .textLayer {
   position: absolute;
   text-align: initial;
-  inset: 0;
-  overflow: clip;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
   opacity: 1;
   line-height: 1;
-  letter-spacing: normal;
-  word-spacing: normal;
   text-size-adjust: none;
   -webkit-text-size-adjust: none;
   forced-color-adjust: none;
   transform-origin: 0 0;
   z-index: 2;
-  caret-color: CanvasText;
   pointer-events: auto;
-  --min-font-size: 1;
-  --text-scale-factor: calc(var(--total-scale-factor, 1) * var(--min-font-size));
-  --min-font-size-inv: calc(1 / var(--min-font-size));
 }
 
 .textLayer span,
@@ -327,19 +331,30 @@ button, input { font: inherit; color: inherit; }
   transform-origin: 0% 0%;
   user-select: text;
   -webkit-user-select: text;
+  /* Do NOT override transform/font-size – PDF.js sets them inline */
 }
 
-/* PDF.js scale + rotation handling (critical for alignment) */
-.textLayer > :not(.markedContent),
-.textLayer .markedContent span:not(.markedContent) {
-  z-index: 1;
-  font-size: calc(var(--text-scale-factor, 1) * var(--font-height, 1px));
-  --scale-x: 1;
-  --rotate: 0deg;
-  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scaleY(var(--min-font-size-inv, 1));
+/* Spans marked non-selectable (empty, vertical, narrow left-column artifacts) */
+.textLayer span:empty,
+.textLayer span[aria-hidden="true"],
+.textLayer span.no-select {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: default !important;
 }
 
-/* Native browser-style selection (same blue as Chrome/Edge) */
+/* Never show selection highlight on disabled spans */
+.textLayer span.no-select::selection,
+.textLayer span[aria-hidden="true"]::selection {
+  background: transparent !important;
+}
+.textLayer span.no-select::-moz-selection,
+.textLayer span[aria-hidden="true"]::-moz-selection {
+  background: transparent !important;
+}
+
+/* Native Chrome/Edge selection blue */
 .textLayer ::selection {
   background: rgba(0, 100, 255, 0.3);
   color: transparent;
@@ -350,7 +365,7 @@ button, input { font: inherit; color: inherit; }
   color: transparent;
 }
 
-/* Search highlights – identical style to native text selection */
+/* Search highlights – same blue as selection */
 .textLayer .highlight {
   margin: -1px;
   padding: 1px;
@@ -363,11 +378,14 @@ button, input { font: inherit; color: inherit; }
   background-color: rgba(0, 100, 255, 0.45);
 }
 
-/* Required by PDF.js for correct multi-line / drag selection */
+/* Required for multi-line drag selection (Mozilla technique) */
 .textLayer .endOfContent {
   display: block;
   position: absolute;
-  inset: 100% 0 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 100%;
   z-index: -1;
   cursor: default;
   user-select: none;

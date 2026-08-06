@@ -1,14 +1,25 @@
 (() => {
   const isPdfPath = (path) => typeof path === 'string' && /\.pdf(\?|#|$)/i.test(path);
 
+  // Use Lumina PDF viewer
   const toReaderUrl = (path) => `viewer.html?file=${encodeURIComponent(path)}`;
 
   function extractRepoPathFromUrl(url) {
     try {
       const u = new URL(url, location.href);
-      const marker = '/Cyclotron123/BSDS_Materials/main/';
-      const idx = u.pathname.indexOf(marker);
-      if (idx !== -1) return u.pathname.slice(idx + marker.length);
+      const markers = [
+        '/CyclotronPulsar/BSDS_Materials/main/',
+        '/CyclotronPulsar/BSDS_Materials/master/',
+        '/Cyclotron123/BSDS_Materials/main/',
+        '/BSDS_Materials/main/',
+      ];
+      for (const marker of markers) {
+        const idx = u.pathname.indexOf(marker);
+        if (idx !== -1) return u.pathname.slice(idx + marker.length);
+      }
+      if (/^\/?(BSDS_[123]\/).+\.pdf$/i.test(u.pathname)) {
+        return u.pathname.replace(/^\//, '');
+      }
       return null;
     } catch {
       return null;
@@ -16,15 +27,15 @@
   }
 
   function rewritePdfLinks(root = document) {
-    root.querySelectorAll('a.action-icon-btn').forEach((a) => {
+    root.querySelectorAll('a.action-icon-btn, a[href*=".pdf"]').forEach((a) => {
       const href = a.getAttribute('href') || '';
       if (!/\.pdf(\?|#|$)/i.test(href)) return;
-      const path = extractRepoPathFromUrl(href);
+      const path = extractRepoPathFromUrl(href) || (href.match(/(BSDS_[123]\/[^?#]+\.pdf)/i) || [])[1];
       if (!path) return;
       a.href = toReaderUrl(path);
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
-      a.title = 'Open in PDF reader';
+      a.title = 'Open in Lumina PDF';
     });
   }
 
@@ -45,18 +56,27 @@
     patchOpenFile();
 
     document.addEventListener('click', (e) => {
-      const fileName = e.target.closest?.('.file-row .file-name, .file-row .action-icon-btn[title="Open in new tab"]');
+      const fileName = e.target.closest?.('.file-row .file-name, .file-row .action-icon-btn');
       if (!fileName) return;
       const row = fileName.closest('.file-row');
       if (!row) return;
 
-      const openLink = row.querySelector('a.action-icon-btn[title="Open in new tab"]');
+      const openLink = row.querySelector('a.action-icon-btn');
       if (!openLink) return;
 
-      const href = openLink.href || '';
-      if (!/\.pdf(\?|#|$)/i.test(href)) return;
+      const href = openLink.href || openLink.getAttribute('href') || '';
+      if (!/\.pdf(\?|#|$)/i.test(href) && !href.includes('viewer.html')) return;
 
-      const path = extractRepoPathFromUrl(href);
+      let path = extractRepoPathFromUrl(href);
+      if (!path && href.includes('viewer.html')) {
+        try {
+          path = new URL(href, location.href).searchParams.get('file');
+        } catch {}
+      }
+      if (!path) {
+        const m = href.match(/(BSDS_[123]\/[^?#]+\.pdf)/i);
+        if (m) path = m[1];
+      }
       if (!path) return;
 
       e.preventDefault();

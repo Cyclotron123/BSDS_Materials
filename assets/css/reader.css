@@ -135,8 +135,7 @@ button, input {
 }
 
 .page-canvas {
-  position: relative;
-  z-index: 1;
+  
   display: block;
   width: 100%;
   height: auto;
@@ -144,53 +143,45 @@ button, input {
   transform-origin: top center;
 }
 
-/* ========== TEXT LAYER (works with PDF.js 3.11) ========== */
 .text-layer {
   position: absolute;
   left: 0;
   top: 0;
-  right: 0;
-  bottom: 0;
   overflow: hidden;
   line-height: 1;
   opacity: 1;
   pointer-events: auto;
-  transform-origin: 0 0;
-  z-index: 2;
-  -webkit-text-size-adjust: none;
-  -moz-text-size-adjust: none;
-  text-size-adjust: none;
+  transform-origin: top left;
 }
-
 .text-layer span {
   position: absolute;
   white-space: pre;
-  transform-origin: 0% 0%;
+  transform-origin: 0 0;
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
-  cursor: text;
+  -webkit-text-stroke: 0 transparent;
   user-select: text;
-  line-height: 1;
+  cursor: text;
 }
 
-/* Selection highlight */
+/* Keep selection functional without making the invisible text layer visibly
+"pop" or change size when text is selected. */
 .text-layer span::selection {
-  background: rgba(37, 99, 235, 0.32);
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
-}
-.text-layer span::-moz-selection {
-  background: rgba(37, 99, 235, 0.32);
-  color: transparent !important;
+  background: rgba(37, 99, 235, 0.25);
 }
 
-/* Search highlights */
-.text-layer span.highlight {
-  background: rgba(255, 215, 0, 0.45);
-  border-radius: 2px;
+.text-layer span::-moz-selection {
+  color: transparent !important;
+  background: rgba(37, 99, 235, 0.25);
 }
-.text-layer span.highlight.selected {
-  background: rgba(255, 140, 0, 0.72);
+
+.text-layer mark {
+  background: rgba(255, 230, 0, 0.45);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
 }
 
 .page-loading {
