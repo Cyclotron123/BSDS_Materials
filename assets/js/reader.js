@@ -262,10 +262,17 @@
         viewport,
         transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
       };
-
       stateObj.container.style.width = `${viewport.width}px`;
-      stateObj.container.style.minHeight = `${viewport.height}px`;
-      canvas.classList.remove('hidden');
+stateObj.container.style.height = `${viewport.height}px`;
+stateObj.container.style.minHeight = `${viewport.height}px`;
+
+// Keep the text layer exactly the same size as the rendered page.
+stateObj.textLayer.style.width = `${viewport.width}px`;
+stateObj.textLayer.style.height = `${viewport.height}px`;
+stateObj.textLayer.style.left = "0";
+stateObj.textLayer.style.top = "0";
+
+canvas.classList.remove('hidden');
       stateObj.container.querySelector('.page-loading')?.remove();
 
       const renderTask = page.render(renderCtx);

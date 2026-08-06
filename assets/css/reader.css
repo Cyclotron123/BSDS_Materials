@@ -122,9 +122,7 @@ button, input {
 
 .page {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  display: block;
   align-self: center;
   margin-left: auto;
   margin-right: auto;
@@ -137,6 +135,7 @@ button, input {
 }
 
 .page-canvas {
+  
   display: block;
   width: 100%;
   height: auto;
@@ -146,12 +145,14 @@ button, input {
 
 .text-layer {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
   overflow: hidden;
   line-height: 1;
   opacity: 1;
+  pointer-events: auto;
+  transform-origin: top left;
 }
-
 .text-layer span {
   position: absolute;
   white-space: pre;
