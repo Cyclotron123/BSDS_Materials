@@ -365,17 +365,18 @@ button, input { font: inherit; color: inherit; }
   color: transparent;
 }
 
-/* Search highlights – same blue as selection */
-.textLayer .highlight {
-  margin: -1px;
-  padding: 1px;
-  background-color: rgba(0, 100, 255, 0.3);
+/* Search highlights – only the matched word (same blue as selection) */
+.textLayer mark.highlight {
+  color: transparent;
+  background-color: rgba(0, 100, 255, 0.35);
   border-radius: 0;
+  padding: 0;
+  margin: 0;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
-.textLayer .highlight.selected {
-  background-color: rgba(0, 100, 255, 0.45);
+.textLayer mark.highlight.selected {
+  background-color: rgba(0, 100, 255, 0.55);
 }
 
 /* Required for multi-line drag selection (Mozilla technique) */

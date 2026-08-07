@@ -474,37 +474,82 @@
   // Search
   // --------------------------------------------------
   function clearHighlights() {
+    // Unwrap <mark class="highlight"> back to plain text
+    document.querySelectorAll('.textLayer mark.highlight').forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) return;
+      parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
+      parent.normalize();
+    });
+    // Legacy class cleanup
     document.querySelectorAll('.textLayer .highlight').forEach((el) => {
       el.classList.remove('highlight', 'selected');
     });
   }
 
+  // Highlight ONLY the matched characters inside spans (not the whole line)
   function applyHighlightsOnPage(pageNum) {
     if (!state.searchTerm) return;
     const ps = getPageState(pageNum);
     if (!ps.textLayer) return;
 
-    const match = state.searchMatches[state.currentMatch];
-    const spans = ps.textLayer.querySelectorAll('span');
+    const termLen = state.searchTerm.length;
+    const current = state.searchMatches[state.currentMatch];
+    const pageMatches = state.searchMatches.filter((m) => m.page === pageNum);
+    if (!pageMatches.length) return;
+
+    // Build list of top-level text spans (skip nested marks)
+    const spans = Array.from(ps.textLayer.querySelectorAll(':scope > span'));
     let charPos = 0;
 
     spans.forEach((span) => {
-      const len = (span.textContent || '').length;
-      const start = charPos;
-      const end = charPos + len;
-      charPos = end;
+      // Use original text (ignore nested marks)
+      const raw = span.textContent || '';
+      const len = raw.length;
+      const spanStart = charPos;
+      const spanEnd = charPos + len;
+      charPos = spanEnd;
 
-      // Any match that overlaps this span
-      const hits = state.searchMatches.filter(
-        (m) => m.page === pageNum && end > m.start && start < m.end
-      );
-      if (hits.length) {
-        span.classList.add('highlight');
-        if (match && match.page === pageNum && end > match.start && start < match.end) {
-          span.classList.add('selected');
+      // Matches that overlap this span
+      const hits = pageMatches.filter((m) => m.end > spanStart && m.start < spanEnd);
+      if (!hits.length) return;
+
+      // Rebuild span content with <mark> only around matched parts
+      let html = '';
+      let cursor = 0;
+      // Sort hits by start within this span
+      const localHits = hits
+        .map((m) => ({
+          localStart: Math.max(0, m.start - spanStart),
+          localEnd: Math.min(len, m.end - spanStart),
+          isCurrent: current && m.page === current.page && m.start === current.start && m.end === current.end,
+        }))
+        .filter((h) => h.localEnd > h.localStart)
+        .sort((a, b) => a.localStart - b.localStart);
+
+      for (const h of localHits) {
+        if (h.localStart > cursor) {
+          html += escapeHtml(raw.slice(cursor, h.localStart));
         }
+        const cls = h.isCurrent ? 'highlight selected' : 'highlight';
+        html += `<mark class="${cls}">${escapeHtml(raw.slice(h.localStart, h.localEnd))}</mark>`;
+        cursor = h.localEnd;
       }
+      if (cursor < len) {
+        html += escapeHtml(raw.slice(cursor));
+      }
+
+      // Preserve positioning styles; only replace text content
+      span.innerHTML = html;
     });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   async function runSearch(term) {
@@ -552,8 +597,9 @@
     setCurrentPage(first.page);
     scrollToPage(first.page);
     await renderPage(first.page);
+    // Highlight all matches on the current page
     applyHighlightsOnPage(first.page);
-    setStatus(`${state.searchMatches.length} match${state.searchMatches.length > 1 ? 'es' : ''} found`);
+    setStatus(`Match 1 of ${state.searchMatches.length}`);
   }
 
   function jumpMatch(dir) {
@@ -565,10 +611,6 @@
     scrollToPage(m.page);
     renderPage(m.page).then(() => {
       clearHighlights();
-      // re-highlight all + current
-      state.searchMatches.forEach((match) => {
-        if (match.page === m.page) applyHighlightsOnPage(match.page);
-      });
       applyHighlightsOnPage(m.page);
     });
     setStatus(`Match ${state.currentMatch + 1} of ${state.searchMatches.length}`);
@@ -778,6 +820,24 @@
     els.searchInput.addEventListener('input', () => {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => runSearch(els.searchInput.value), 280);
+    });
+    // Enter = next match, Shift+Enter = previous match (works immediately)
+    els.searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!state.searchMatches.length) {
+          // First Enter runs the search if not yet done
+          runSearch(els.searchInput.value).then(() => {
+            if (state.searchMatches.length > 1) {
+              // stay on first; next Enter will advance
+            }
+          });
+          return;
+        }
+        if (e.shiftKey) jumpMatch(-1);
+        else jumpMatch(1);
+      }
     });
     els.searchPrev.addEventListener('click', () => jumpMatch(-1));
     els.searchNext.addEventListener('click', () => jumpMatch(1));
