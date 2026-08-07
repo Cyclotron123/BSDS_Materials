@@ -34,6 +34,7 @@
     fitWidth: $('btn-fit-width'),
     fitPage: $('btn-fit-page'),
     searchInput: $('search-input'),
+    searchCount: $('search-count'),
     searchPrev: $('btn-search-prev'),
     searchNext: $('btn-search-next'),
     theme: $('btn-theme'),
@@ -509,6 +510,17 @@
   // --------------------------------------------------
   // Search
   // --------------------------------------------------
+  function updateSearchCount() {
+    if (!els.searchCount) return;
+    const total = state.searchMatches.length;
+    if (!state.searchTerm || total === 0) {
+      els.searchCount.textContent = state.searchTerm ? '0/0' : '';
+      return;
+    }
+    const cur = state.currentMatch >= 0 ? state.currentMatch + 1 : 0;
+    els.searchCount.textContent = cur + '/' + total;
+  }
+
   function clearHighlights() {
     // Unwrap <mark class="highlight"> back to plain text
     document.querySelectorAll('.textLayer mark.highlight').forEach((mark) => {
@@ -595,6 +607,7 @@
     clearHighlights();
 
     if (!state.searchTerm || !state.pdfDoc) {
+      updateSearchCount();
       setStatus(state.pageCount ? `Loaded ${state.pageCount} pages` : 'Ready');
       return;
     }
@@ -624,6 +637,7 @@
     }
 
     if (!state.searchMatches.length) {
+      updateSearchCount();
       setStatus(`No matches for “${state.searchTerm}”`);
       return;
     }
@@ -640,6 +654,7 @@
         setTimeout(() => scrollToMatch('smooth'), 50);
       }
     });
+    updateSearchCount();
     setStatus(`Match 1 of ${state.searchMatches.length}`);
   }
 
@@ -659,6 +674,7 @@
         }
       });
     });
+    updateSearchCount();
     setStatus(`Match ${state.currentMatch + 1} of ${state.searchMatches.length}`);
   }
 

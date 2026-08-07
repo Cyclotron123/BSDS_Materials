@@ -164,6 +164,19 @@ button, input { font: inherit; color: inherit; }
 }
 .search-box input::placeholder { color: var(--muted); }
 
+.search-count {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  min-width: 2.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.search-count:empty {
+  display: none;
+}
+
 .muted { color: var(--muted); font-size: 0.85rem; }
 
 /* ---------- Main layout ---------- */
