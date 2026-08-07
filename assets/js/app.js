@@ -173,8 +173,8 @@ async function fetchTree() {
 function buildTreeMap(tree) {
   const map = { '': { folders: new Set(), files: [] } };
   
-  // Define files/folders to hide from the UI
-  const hiddenPaths = ['index.html', 'assets', 'README.md', '.git'];
+  // Define files/folders to hide from the UI also the hidden folders
+  const hiddenPaths = ['index.html', 'assets', 'css', 'js', 'README.md', '.git'];
 
   for (const item of tree) {
     // Check if the item path starts with any of our hidden paths
