@@ -457,6 +457,42 @@
     if (el) el.scrollIntoView({ behavior, block: 'start' });
   }
 
+  // Scroll so the current search match is centered in the viewport
+  function scrollToMatch(behavior = 'smooth') {
+    const mark = els.viewer.querySelector('mark.highlight.selected')
+      || els.viewer.querySelector('mark.highlight')
+      || els.viewer.querySelector('.highlight.selected');
+    if (!mark) return false;
+
+    const wrap = els.viewerWrap;
+    if (!wrap) {
+      mark.scrollIntoView({ behavior, block: 'center', inline: 'center' });
+      return true;
+    }
+
+    const markRect = mark.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+
+    // Current scroll position of the viewer
+    const markCenterY = markRect.top + markRect.height / 2;
+    const wrapCenterY = wrapRect.top + wrapRect.height / 2;
+    const deltaY = markCenterY - wrapCenterY;
+
+    const markCenterX = markRect.left + markRect.width / 2;
+    const wrapCenterX = wrapRect.left + wrapRect.width / 2;
+    const deltaX = markCenterX - wrapCenterX;
+
+    const targetTop = wrap.scrollTop + deltaY;
+    const targetLeft = wrap.scrollLeft + deltaX;
+
+    wrap.scrollTo({
+      top: Math.max(0, targetTop),
+      left: Math.max(0, targetLeft),
+      behavior,
+    });
+    return true;
+  }
+
   function setCurrentPage(n, syncInput = true) {
     state.currentPage = normalizePage(n);
     if (syncInput) els.pageInput.value = String(state.currentPage);
@@ -595,10 +631,15 @@
     state.currentMatch = 0;
     const first = state.searchMatches[0];
     setCurrentPage(first.page);
-    scrollToPage(first.page);
     await renderPage(first.page);
-    // Highlight all matches on the current page
     applyHighlightsOnPage(first.page);
+    // Center the matched text (retry once after layout)
+    requestAnimationFrame(() => {
+      if (!scrollToMatch('smooth')) {
+        scrollToPage(first.page);
+        setTimeout(() => scrollToMatch('smooth'), 50);
+      }
+    });
     setStatus(`Match 1 of ${state.searchMatches.length}`);
   }
 
@@ -608,10 +649,15 @@
       (state.currentMatch + dir + state.searchMatches.length) % state.searchMatches.length;
     const m = state.searchMatches[state.currentMatch];
     setCurrentPage(m.page);
-    scrollToPage(m.page);
     renderPage(m.page).then(() => {
       clearHighlights();
       applyHighlightsOnPage(m.page);
+      requestAnimationFrame(() => {
+        if (!scrollToMatch('smooth')) {
+          scrollToPage(m.page);
+          setTimeout(() => scrollToMatch('smooth'), 50);
+        }
+      });
     });
     setStatus(`Match ${state.currentMatch + 1} of ${state.searchMatches.length}`);
   }
